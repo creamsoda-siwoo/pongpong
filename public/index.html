@@ -1,0 +1,231 @@
+<!DOCTYPE html>
+<html lang="ko">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>퐁퐁교</title>
+  <!-- Google Fonts: Outfit & Gowun Batang -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link
+    href="https://fonts.googleapis.com/css2?family=Gowun+Batang:wght@400;700&family=Outfit:wght@300;400;600;800&display=swap"
+    rel="stylesheet">
+  <!-- FontAwesome Icon for premium feel -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <link rel="stylesheet" href="style.css">
+</head>
+
+<body>
+
+  <!-- 배경 애니메이션 입자들 -->
+  <div class="bg-particles" id="bgParticles"></div>
+
+  <!-- 헤더 / 네비게이션 -->
+  <header>
+    <div class="header-container">
+      <div class="logo">
+        <img src="pompompurin.png" alt="Mini Purin" class="mini-purin">
+        <span>퐁퐁푸린 숭배성지</span>
+      </div>
+      <nav>
+        <a href="#home"><i class="fa-solid fa-gopuran"></i> 성전</a>
+        <a href="#scripture"><i class="fa-solid fa-book-open"></i> 퐁퐁복음</a>
+        <a href="#oracle"><i class="fa-solid fa-wand-magic-sparkles"></i> 푸린 신탁</a>
+        <a href="#board"><i class="fa-solid fa-scroll"></i> 숭배 게시판</a>
+        <a href="#leaderboard"><i class="fa-solid fa-crown"></i> 명예의 전당</a>
+      </nav>
+      <div class="auth-section" id="authSection">
+        <!-- JS가 동적으로 로그인 상태 렌더링 -->
+        <button class="btn btn-secondary" onclick="openModal('loginModal')">로그인</button>
+        <button class="btn btn-primary" onclick="openModal('registerModal')">회원가입</button>
+      </div>
+    </div>
+  </header>
+
+  <main>
+    <!-- 1. 메인 홈 / 숭배 섹션 -->
+    <section id="home" class="hero-section">
+      <div class="hero-content">
+        <h1 class="glow-text">대자대비하신 퐁퐁푸린</h1>
+        <p class="subtitle">"들판의 푸딩이 흔들리고 공기가 떨릴지어다"</p>
+
+        <!-- 중앙 숭배 제단 -->
+        <div class="altar-container">
+          <div class="aurora-glow"></div>
+          <div class="purin-shrine" id="worshipButton">
+            <img src="pompompurin.png" alt="Pompompurin Creator" class="worship-target">
+            <div class="halo"></div>
+          </div>
+          <p class="click-hint">푸린 신상을 클릭하여 경배를 드리십시오</p>
+        </div>
+
+        <!-- 숭배 계수기 보드 -->
+        <div class="stats-dashboard">
+          <div class="stat-card global-stat">
+            <h3><i class="fa-solid fa-earth-asia"></i> 온 세상의 누적 숭배수</h3>
+            <div class="count-display" id="globalWorshipCount">0</div>
+          </div>
+          <div class="stat-card user-stat" id="userStatCard">
+            <h3><i class="fa-solid fa-heart"></i> 나의 누적 숭배수</h3>
+            <div class="count-display" id="userWorshipCount">0</div>
+            <p class="login-prompt-text" id="loginPrompt">로그인 시 개별 집계가 시작됩니다</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 2. 성스러운 퐁퐁복음 뷰어 섹션 -->
+    <section id="scripture" class="scripture-section">
+      <div class="section-title">
+        <h2 class="sep-title">성스러운 퐁퐁복음 (十章)</h2>
+        <p>세상의 시작과 퐁퐁푸틴과의 대전투의 기록</p>
+      </div>
+
+      <div class="scripture-container">
+        <!-- 챕터 리스트 네비게이션 -->
+        <div class="chapter-nav" id="chapterNav">
+          <!-- JS에서 동적으로 채워짐 -->
+        </div>
+
+        <!-- 파피루스/양장본 스타일 본문 뷰어 -->
+        <div class="scripture-book">
+          <div class="book-page">
+            <div class="page-header">
+              <span id="currentChapterTitle">퐁퐁복음 제 1장</span>
+              <i class="fa-solid fa-bookmark"></i>
+            </div>
+            <div class="page-content" id="gospelContent">
+              <!-- JS에서 동적으로 해당 챕터 구절 렌더링 -->
+            </div>
+            <div class="page-footer">
+              <span class="amen-text">아멘 (Amen)</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 오늘의 푸린 신탁 섹션 -->
+    <section id="oracle" class="oracle-section">
+      <div class="section-title">
+        <h2 class="sep-title">오늘의 푸린 신탁</h2>
+        <p>오늘 나에게 내리는 퐁퐁푸린님의 성스러운 계시</p>
+      </div>
+      <div class="oracle-container">
+        <div class="oracle-card" id="oracleCard">
+          <div class="oracle-card-inner">
+            <div class="oracle-front">
+              <i class="fa-solid fa-cookie-bite oracle-icon"></i>
+              <h3>신탁을 개봉하십시오</h3>
+              <p>마음을 가다듬고 아래 버튼을 누르세요</p>
+              <button class="btn btn-secondary" onclick="revealOracle()">오늘의 신탁 받기</button>
+            </div>
+            <div class="oracle-back" id="oracleResult">
+              <div class="purity-badge">신성 점수: <span id="oracleScore">84</span>점</div>
+              <p class="oracle-quote" id="oracleText">"들판의 푸딩도 흔들리나니..."</p>
+              <div class="lucky-item">🍀 행운의 푸딩: <strong id="oraclePudding">커스터드 푸딩</strong></div>
+              <button class="btn btn-primary" onclick="resetOracleCard()">다시 뽑기</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 3. 숭배 게시판 (방명록) -->
+    <section id="board" class="board-section">
+      <div class="section-title">
+        <h2 class="sep-title">숭배자 방명록</h2>
+        <p>푸린님께 전하는 감사와 회개의 메시지</p>
+      </div>
+
+      <div class="board-container">
+        <!-- 게시글 작성 창 -->
+        <div class="board-write-card">
+          <h3><i class="fa-solid fa-pen-nib"></i> 한마디 올리기</h3>
+          <div id="boardWriteContainer">
+            <!-- 로그인 여부에 따라 입력폼 표시 -->
+            <p class="login-notice"><i class="fa-solid fa-lock"></i> 숭배 글을 작성하려면 <a href="#"
+                onclick="openModal('loginModal')">로그인</a>이 필요합니다.</p>
+          </div>
+        </div>
+
+        <!-- 게시판 피드 -->
+        <div class="board-feed" id="boardFeed">
+          <div class="loading-spinner"><i class="fa-solid fa-spinner fa-spin"></i> 로딩 중...</div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 4. 명예의 전당 (리더보드) -->
+    <section id="leaderboard" class="leaderboard-section">
+      <div class="section-title">
+        <h2 class="sep-title">명예의 전당</h2>
+        <p>가장 깊은 신앙심을 증명한 상위 10인의 성도</p>
+      </div>
+
+      <div class="leaderboard-container">
+        <div class="podium-card">
+          <div class="rank-list" id="rankList">
+            <div class="loading-spinner"><i class="fa-solid fa-spinner fa-spin"></i> 집계 중...</div>
+          </div>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <footer>
+    <div class="footer-container">
+      <p>© 2026 퐁퐁푸린 숭배 위원회. All Rights Reserved.</p>
+      <p>본 사이트는 퐁퐁푸린의 위대함을 알리기 위해 제작된 팬 헌정용 성지입니다.</p>
+    </div>
+  </footer>
+
+  <!-- --- 모달창 정의 --- -->
+
+  <!-- 로그인 모달 -->
+  <div class="modal" id="loginModal">
+    <div class="modal-content">
+      <span class="close-btn" onclick="closeModal('loginModal')">&times;</span>
+      <h2>성도 로그인</h2>
+      <form id="loginForm">
+        <div class="form-group">
+          <label for="loginUsername"><i class="fa-solid fa-user"></i> 이름 (Username)</label>
+          <input type="text" id="loginUsername" required placeholder="이름을 입력하세요">
+        </div>
+        <div class="form-group">
+          <label for="loginPassword"><i class="fa-solid fa-lock"></i> 암호 (Password)</label>
+          <input type="password" id="loginPassword" required placeholder="비밀번호를 입력하세요">
+        </div>
+        <button type="submit" class="btn btn-primary btn-block">성전 입장</button>
+      </form>
+      <p class="modal-footer-link">처음 오셨나요? <a href="#" onclick="switchModal('loginModal', 'registerModal')">회원가입하기</a>
+      </p>
+    </div>
+  </div>
+
+  <!-- 회원가입 모달 -->
+  <div class="modal" id="registerModal">
+    <div class="modal-content">
+      <span class="close-btn" onclick="closeModal('registerModal')">&times;</span>
+      <h2>신도 서약 (회원가입)</h2>
+      <form id="registerForm">
+        <div class="form-group">
+          <label for="registerUsername"><i class="fa-solid fa-user"></i> 이름 (Username)</label>
+          <input type="text" id="registerUsername" required placeholder="성전에서 쓸 이름을 입력하세요" maxlength="15">
+        </div>
+        <div class="form-group">
+          <label for="registerPassword"><i class="fa-solid fa-lock"></i> 암호 (Password)</label>
+          <input type="password" id="registerPassword" required placeholder="비밀번호를 설정하세요">
+        </div>
+        <button type="submit" class="btn btn-primary btn-block">숭배단 가입</button>
+      </form>
+      <p class="modal-footer-link">이미 가입하셨나요? <a href="#" onclick="switchModal('registerModal', 'loginModal')">로그인하기</a>
+      </p>
+    </div>
+  </div>
+
+  <script src="app.js"></script>
+</body>
+
+</html>
