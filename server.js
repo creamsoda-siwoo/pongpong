@@ -3,6 +3,7 @@ const cookieParser = require('cookie-parser');
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const { createClient } = require('@supabase/supabase-js');
+const path = require('path');
 require('dotenv').config();
 
 const app = express();
@@ -12,7 +13,7 @@ const JWT_SECRET = process.env.JWT_SECRET || 'pompompurin-worship-secret-key-123
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(cookieParser());
-app.use(express.static('public'));
+app.use(express.static(path.join(__dirname, 'public')));
 
 // --- Supabase 설정 및 Mock DB 지원 ---
 let supabase = null;
@@ -434,6 +435,11 @@ app.get('/api/oracle', (req, res) => {
     luckyPudding: randomPudding,
     purityScore: score
   });
+});
+
+// 메인 페이지 라우트 백업
+app.get('/', (req, res) => {
+  res.sendFile(path.join(__dirname, 'public', 'index.html'));
 });
 
 app.listen(PORT, () => {
