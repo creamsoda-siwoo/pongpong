@@ -413,7 +413,7 @@ async function handleWorshipClick(e) {
       state.globalWorshipCount = data.globalCount;
       el.globalWorshipCount.innerText = parseInt(data.globalCount).toLocaleString();
       
-      if (state.isLoggedIn && data.userCount !== null) {
+      if (state.isLoggedIn && data.userCount !== undefined && data.userCount !== null) {
         state.userWorshipCount = data.userCount;
         el.userWorshipCount.innerText = parseInt(data.userCount).toLocaleString();
       }

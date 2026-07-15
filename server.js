@@ -19,6 +19,9 @@ app.use(express.static(path.join(__dirname, 'public')));
 let supabase = null;
 let isMockDb = false;
 
+const DB_FILE = path.join(__dirname, 'worship_persist.json');
+const fs = require('fs');
+
 // Mock DB 메모리 데이터스토어 (Supabase 미연동 시 사용)
 const mockDb = {
   users: [], // { id, username, password_hash, worship_count, created_at }
@@ -28,6 +31,34 @@ const mockDb = {
     { id: 2, username: '푸딩마스터', content: '퐁퐁복음 1장을 읽고 깊은 감명을 받았습니다. 아멘.', image_data: null, created_at: new Date(Date.now() - 1800000).toISOString() }
   ]
 };
+
+// 로컬 DB 저장/로드 함수
+function loadLocalDb() {
+  if (fs.existsSync(DB_FILE)) {
+    try {
+      const data = fs.readFileSync(DB_FILE, 'utf8');
+      const parsed = JSON.parse(data);
+      if (parsed) {
+        if (parsed.users) mockDb.users = parsed.users;
+        if (parsed.globalCount !== undefined) mockDb.globalCount = parsed.globalCount;
+        if (parsed.posts) mockDb.posts = parsed.posts;
+      }
+    } catch (e) {
+      console.error('로컬 백업 DB 로드 실패:', e);
+    }
+  }
+}
+
+function saveLocalDb() {
+  try {
+    fs.writeFileSync(DB_FILE, JSON.stringify(mockDb, null, 2), 'utf8');
+  } catch (e) {
+    console.error('로컬 백업 DB 저장 실패:', e);
+  }
+}
+
+// 초기 로딩
+loadLocalDb();
 
 if (process.env.SUPABASE_URL && process.env.SUPABASE_KEY && 
     process.env.SUPABASE_URL.trim() !== '' && process.env.SUPABASE_KEY.trim() !== '' &&
@@ -108,6 +139,7 @@ app.post('/api/auth/register', async (req, res) => {
         created_at: new Date().toISOString()
       };
       mockDb.users.push(newUser);
+      saveLocalDb();
       return res.json({ success: true, message: '회원가입이 완료되었습니다. (Mock DB)' });
     } else {
       // Supabase 중복 체크 및 가입
@@ -244,22 +276,30 @@ app.post('/api/worship', authenticateToken, async (req, res) => {
           userCount = user.worship_count;
         }
       }
+      saveLocalDb();
     } else {
       // Supabase: 글로벌 숭배 카운트 증가
-      // 트랜잭션 대신 rpc 혹은 increment 사용
       const { data: globalData, error: gError } = await supabase
-        .rpc('increment_worship_global'); // rpc를 사용하거나 다이렉트 업데이트
+        .rpc('increment_worship_global');
 
       if (gError) {
-        // RPC가 정의 안 되었을 경우 직접 업데이트 시도
-        const { data: selectG } = await supabase.from('worship_global').select('count').eq('id', 1).single();
-        const currentGCount = selectG ? parseInt(selectG.count) : 0;
-        const { data: updatedG } = await supabase
+        // RPC가 없거나 오류일 경우 upsert로 강제 증가 처리
+        const { data: selectG, error: sGError } = await supabase
           .from('worship_global')
-          .update({ count: currentGCount + 1 })
+          .select('count')
           .eq('id', 1)
+          .maybeSingle();
+        
+        if (sGError) console.error("Error selectG:", sGError);
+        const currentGCount = selectG ? parseInt(selectG.count) : 0;
+        
+        const { data: updatedG, error: upGError } = await supabase
+          .from('worship_global')
+          .upsert({ id: 1, count: currentGCount + 1 })
           .select('count')
           .single();
+        
+        if (upGError) console.error("Error upserting global count:", upGError);
         globalCount = updatedG ? updatedG.count : currentGCount + 1;
       } else {
         globalCount = globalData;
@@ -267,14 +307,23 @@ app.post('/api/worship', authenticateToken, async (req, res) => {
 
       // 로그인 상태면 유저 숭배수 증가
       if (req.user) {
-        const { data: selectU } = await supabase.from('worship_users').select('worship_count').eq('id', req.user.id).single();
+        const { data: selectU, error: sUError } = await supabase
+          .from('worship_users')
+          .select('worship_count')
+          .eq('id', req.user.id)
+          .maybeSingle();
+        
+        if (sUError) console.error("Error selectU:", sUError);
         const currentUCount = selectU ? parseInt(selectU.worship_count) : 0;
-        const { data: updatedU } = await supabase
+        
+        const { data: updatedU, error: uUError } = await supabase
           .from('worship_users')
           .update({ worship_count: currentUCount + 1 })
           .eq('id', req.user.id)
           .select('worship_count')
           .single();
+        
+        if (uUError) console.error("Error updatedU:", uUError);
         if (updatedU) {
           userCount = updatedU.worship_count;
         }
@@ -387,6 +436,7 @@ app.post('/api/posts', authenticateToken, async (req, res) => {
         created_at: new Date().toISOString()
       };
       mockDb.posts.unshift(newPost);
+      saveLocalDb();
       return res.json({ success: true, post: newPost });
     } else {
       const { data, error } = await supabase
