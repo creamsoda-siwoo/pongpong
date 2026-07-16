@@ -296,12 +296,12 @@ async function fetchStats() {
     const data = await res.json();
     
     if (data) {
-      state.globalWorshipCount = data.globalCount;
-      el.globalWorshipCount.innerText = parseInt(data.globalCount).toLocaleString();
+      state.globalWorshipCount = data.globalCount || 0;
+      el.globalWorshipCount.innerText = parseInt(data.globalCount || 0).toLocaleString();
       
       if (state.isLoggedIn) {
-        state.userWorshipCount = data.userCount;
-        el.userWorshipCount.innerText = parseInt(data.userCount).toLocaleString();
+        state.userWorshipCount = data.userCount || 0;
+        el.userWorshipCount.innerText = parseInt(data.userCount || 0).toLocaleString();
       }
     }
   } catch (err) {
@@ -410,12 +410,12 @@ async function handleWorshipClick(e) {
     const data = await res.json();
     
     if (data.success) {
-      state.globalWorshipCount = data.globalCount;
-      el.globalWorshipCount.innerText = parseInt(data.globalCount).toLocaleString();
+      state.globalWorshipCount = data.globalCount || 0;
+      el.globalWorshipCount.innerText = parseInt(data.globalCount || 0).toLocaleString();
       
       if (state.isLoggedIn && data.userCount !== undefined && data.userCount !== null) {
-        state.userWorshipCount = data.userCount;
-        el.userWorshipCount.innerText = parseInt(data.userCount).toLocaleString();
+        state.userWorshipCount = data.userCount || 0;
+        el.userWorshipCount.innerText = parseInt(data.userCount || 0).toLocaleString();
       }
     }
   } catch (err) {

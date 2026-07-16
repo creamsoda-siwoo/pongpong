@@ -36,3 +36,19 @@ CREATE TABLE IF NOT EXISTS worship_posts (
 ALTER TABLE worship_users DISABLE ROW LEVEL SECURITY;
 ALTER TABLE worship_global DISABLE ROW LEVEL SECURITY;
 ALTER TABLE worship_posts DISABLE ROW LEVEL SECURITY;
+
+-- 4. 글로벌 숭배 카운터 증가 RPC 함수
+CREATE OR REPLACE FUNCTION increment_worship_global()
+RETURNS bigint AS $$
+DECLARE
+    new_count bigint;
+BEGIN
+    INSERT INTO worship_global (id, count)
+    VALUES (1, 1)
+    ON CONFLICT (id) DO UPDATE
+    SET count = worship_global.count + 1
+    RETURNING count INTO new_count;
+    
+    RETURN new_count;
+END;
+$$ LANGUAGE plpgsql;

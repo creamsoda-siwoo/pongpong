@@ -211,8 +211,8 @@ app.post('/api/auth/login', async (req, res) => {
       }
     });
   } catch (err) {
-    console.error(err);
-    res.status(500).json({ error: '로그인 중 오류가 발생했습니다.' });
+    console.error("LOGIN ERROR:", err);
+    res.status(500).json({ error: '로그인 중 오류가 발생했습니다.', details: err.message || err });
   }
 });
 
@@ -291,7 +291,7 @@ app.post('/api/worship', authenticateToken, async (req, res) => {
           .maybeSingle();
         
         if (sGError) console.error("Error selectG:", sGError);
-        const currentGCount = selectG ? parseInt(selectG.count) : 0;
+        const currentGCount = (selectG && selectG.count) ? parseInt(selectG.count) : 0;
         
         const { data: updatedG, error: upGError } = await supabase
           .from('worship_global')
@@ -314,7 +314,7 @@ app.post('/api/worship', authenticateToken, async (req, res) => {
           .maybeSingle();
         
         if (sUError) console.error("Error selectU:", sUError);
-        const currentUCount = selectU ? parseInt(selectU.worship_count) : 0;
+        const currentUCount = (selectU && selectU.worship_count) ? parseInt(selectU.worship_count) : 0;
         
         const { data: updatedU, error: uUError } = await supabase
           .from('worship_users')
@@ -355,11 +355,11 @@ app.get('/api/worship/stats', authenticateToken, async (req, res) => {
       }
     } else {
       const { data: gData } = await supabase.from('worship_global').select('count').eq('id', 1).maybeSingle();
-      globalCount = gData ? gData.count : 0;
+      globalCount = (gData && gData.count !== null) ? gData.count : 0;
 
       if (req.user) {
         const { data: uData } = await supabase.from('worship_users').select('worship_count').eq('id', req.user.id).maybeSingle();
-        userCount = uData ? uData.worship_count : 0;
+        userCount = (uData && uData.worship_count !== null) ? uData.worship_count : 0;
       }
     }
 
