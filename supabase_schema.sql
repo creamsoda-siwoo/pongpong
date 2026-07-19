@@ -52,3 +52,19 @@ BEGIN
     RETURN new_count;
 END;
 $$ LANGUAGE plpgsql;
+
+-- 5. 유저 숭배 카운터 증가 RPC 함수
+CREATE OR REPLACE FUNCTION increment_worship_user(user_id UUID)
+RETURNS integer AS $$
+DECLARE
+    new_count integer;
+BEGIN
+    UPDATE worship_users
+    SET worship_count = worship_count + 1
+    WHERE id = user_id
+    RETURNING worship_count INTO new_count;
+    
+    RETURN new_count;
+END;
+$$ LANGUAGE plpgsql;
+

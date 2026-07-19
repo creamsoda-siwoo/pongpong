@@ -296,12 +296,19 @@ async function fetchStats() {
     const data = await res.json();
     
     if (data) {
-      state.globalWorshipCount = data.globalCount || 0;
-      el.globalWorshipCount.innerText = parseInt(data.globalCount || 0).toLocaleString();
+      const serverGlobalCount = parseInt(data.globalCount || 0);
+      // Guard: Only update if the server count is strictly greater (prevents resetting back to old counts during rapid clicks)
+      if (serverGlobalCount > state.globalWorshipCount) {
+        state.globalWorshipCount = serverGlobalCount;
+        el.globalWorshipCount.innerText = serverGlobalCount.toLocaleString();
+      }
       
-      if (state.isLoggedIn) {
-        state.userWorshipCount = data.userCount || 0;
-        el.userWorshipCount.innerText = parseInt(data.userCount || 0).toLocaleString();
+      if (state.isLoggedIn && data.userCount !== undefined && data.userCount !== null) {
+        const serverUserCount = parseInt(data.userCount || 0);
+        if (serverUserCount > state.userWorshipCount) {
+          state.userWorshipCount = serverUserCount;
+          el.userWorshipCount.innerText = serverUserCount.toLocaleString();
+        }
       }
     }
   } catch (err) {
@@ -405,17 +412,32 @@ async function handleWorshipClick(e) {
   // 클릭 위치 근처에 숭배 Particle 띄우기
   createFloatingParticle(e);
 
+  // Optimistic UI update: Immediately increment counts on click for smooth feeling
+  state.globalWorshipCount += 1;
+  el.globalWorshipCount.innerText = state.globalWorshipCount.toLocaleString();
+
+  if (state.isLoggedIn) {
+    state.userWorshipCount += 1;
+    el.userWorshipCount.innerText = state.userWorshipCount.toLocaleString();
+  }
+
   try {
     const res = await fetch('/api/worship', { method: 'POST' });
     const data = await res.json();
     
     if (data.success) {
-      state.globalWorshipCount = data.globalCount || 0;
-      el.globalWorshipCount.innerText = parseInt(data.globalCount || 0).toLocaleString();
+      const serverGlobalCount = parseInt(data.globalCount || 0);
+      if (serverGlobalCount > state.globalWorshipCount) {
+        state.globalWorshipCount = serverGlobalCount;
+        el.globalWorshipCount.innerText = serverGlobalCount.toLocaleString();
+      }
       
       if (state.isLoggedIn && data.userCount !== undefined && data.userCount !== null) {
-        state.userWorshipCount = data.userCount || 0;
-        el.userWorshipCount.innerText = parseInt(data.userCount || 0).toLocaleString();
+        const serverUserCount = parseInt(data.userCount || 0);
+        if (serverUserCount > state.userWorshipCount) {
+          state.userWorshipCount = serverUserCount;
+          el.userWorshipCount.innerText = serverUserCount.toLocaleString();
+        }
       }
     }
   } catch (err) {
@@ -518,7 +540,7 @@ async function handleLogin(e) {
   }
 }
 
-async function handleLogout() {
+window.handleLogout = async function() {
   try {
     const res = await fetch('/api/auth/logout', { method: 'POST' });
     const data = await res.json();
@@ -527,12 +549,15 @@ async function handleLogout() {
       state.isLoggedIn = false;
       state.user = null;
       updateAuthUI();
+      // Reset user count immediately on logout
+      state.userWorshipCount = 0;
+      el.userWorshipCount.innerText = '0';
       fetchStats();
     }
   } catch (err) {
     console.error('로그아웃 오류:', err);
   }
-}
+};
 
 // 방명록 작성 제출 핸들러
 async function handleWritePost(e) {

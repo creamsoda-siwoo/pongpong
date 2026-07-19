@@ -307,25 +307,33 @@ app.post('/api/worship', authenticateToken, async (req, res) => {
 
       // 로그인 상태면 유저 숭배수 증가
       if (req.user) {
-        const { data: selectU, error: sUError } = await supabase
-          .from('worship_users')
-          .select('worship_count')
-          .eq('id', req.user.id)
-          .maybeSingle();
-        
-        if (sUError) console.error("Error selectU:", sUError);
-        const currentUCount = (selectU && selectU.worship_count) ? parseInt(selectU.worship_count) : 0;
-        
-        const { data: updatedU, error: uUError } = await supabase
-          .from('worship_users')
-          .update({ worship_count: currentUCount + 1 })
-          .eq('id', req.user.id)
-          .select('worship_count')
-          .single();
-        
-        if (uUError) console.error("Error updatedU:", uUError);
-        if (updatedU) {
-          userCount = updatedU.worship_count;
+        const { data: uData, error: uError } = await supabase
+          .rpc('increment_worship_user', { user_id: req.user.id });
+
+        if (uError) {
+          console.warn("RPC increment_worship_user failed, falling back to select & update:", uError.message || uError);
+          const { data: selectU, error: sUError } = await supabase
+            .from('worship_users')
+            .select('worship_count')
+            .eq('id', req.user.id)
+            .maybeSingle();
+          
+          if (sUError) console.error("Error selectU:", sUError);
+          const currentUCount = (selectU && selectU.worship_count) ? parseInt(selectU.worship_count) : 0;
+          
+          const { data: updatedU, error: uUError } = await supabase
+            .from('worship_users')
+            .update({ worship_count: currentUCount + 1 })
+            .eq('id', req.user.id)
+            .select('worship_count')
+            .single();
+          
+          if (uUError) console.error("Error updatedU:", uUError);
+          if (updatedU) {
+            userCount = updatedU.worship_count;
+          }
+        } else {
+          userCount = uData;
         }
       }
     }
