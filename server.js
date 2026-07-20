@@ -88,21 +88,25 @@ const authenticateToken = async (req, res, next) => {
     
     // DB에서 최신 유저 정보 확인
     if (isMockDb) {
-      const user = mockDb.users.find(u => u.username === verified.username);
+      const user = mockDb.users.find(u => (verified.id && u.id === verified.id) || u.username.toLowerCase() === (verified.username || '').toLowerCase());
       if (user) {
         req.user = { id: user.id, username: user.username };
       } else {
         req.user = null;
       }
     } else {
-      const { data, error } = await supabase
-        .from('worship_users')
-        .select('id, username')
-        .eq('username', verified.username)
-        .single();
+      let query;
+      if (verified.id) {
+        query = supabase.from('worship_users').select('id, username').eq('id', verified.id);
+      } else {
+        query = supabase.from('worship_users').select('id, username').ilike('username', verified.username);
+      }
+      const { data, error } = await query.maybeSingle();
       
       if (data && !error) {
         req.user = { id: data.id, username: data.username };
+      } else if (verified.id && verified.username) {
+        req.user = { id: verified.id, username: verified.username };
       } else {
         req.user = null;
       }
@@ -118,50 +122,86 @@ const authenticateToken = async (req, res, next) => {
 // 1. 회원가입
 app.post('/api/auth/register', async (req, res) => {
   const { username, password } = req.body;
-  if (!username || !password) {
+  const trimmedUsername = username ? username.trim() : '';
+
+  if (!trimmedUsername || !password) {
     return res.status(400).json({ error: '사용자 이름과 비밀번호를 입력해주세요.' });
+  }
+
+  if (trimmedUsername.length < 2) {
+    return res.status(400).json({ error: '사용자 이름은 2자 이상이어야 합니다.' });
   }
 
   try {
     const passwordHash = await bcrypt.hash(password, 10);
 
     if (isMockDb) {
-      const exists = mockDb.users.some(u => u.username === username);
+      const exists = mockDb.users.some(u => u.username.toLowerCase() === trimmedUsername.toLowerCase());
       if (exists) {
         return res.status(400).json({ error: '이미 존재하는 사용자 이름입니다.' });
       }
 
       const newUser = {
         id: Math.random().toString(36).substring(2, 11),
-        username,
+        username: trimmedUsername,
         password_hash: passwordHash,
         worship_count: 0,
         created_at: new Date().toISOString()
       };
       mockDb.users.push(newUser);
       saveLocalDb();
-      return res.json({ success: true, message: '회원가입이 완료되었습니다. (Mock DB)' });
+
+      // 회원가입 후 자동 로그인 처리 (JWT 쿠키 발급)
+      const token = jwt.sign({ id: newUser.id, username: newUser.username }, JWT_SECRET, { expiresIn: '30d' });
+      res.cookie('token', token, {
+        httpOnly: true,
+        path: '/',
+        sameSite: 'lax',
+        maxAge: 30 * 24 * 60 * 60 * 1000
+      });
+
+      return res.json({
+        success: true,
+        message: '회원가입 및 로그인이 완료되었습니다.',
+        user: { username: newUser.username, worship_count: 0 }
+      });
     } else {
       // Supabase 중복 체크 및 가입
       const { data: existingUser } = await supabase
         .from('worship_users')
         .select('username')
-        .eq('username', username)
+        .ilike('username', trimmedUsername)
         .maybeSingle();
 
       if (existingUser) {
         return res.status(400).json({ error: '이미 존재하는 사용자 이름입니다.' });
       }
 
-      const { error } = await supabase
+      const { data: newUser, error } = await supabase
         .from('worship_users')
-        .insert([{ username, password_hash: passwordHash, worship_count: 0 }]);
+        .insert([{ username: trimmedUsername, password_hash: passwordHash, worship_count: 0 }])
+        .select('id, username, worship_count')
+        .single();
 
       if (error) throw error;
-      return res.json({ success: true, message: '회원가입이 완료되었습니다.' });
+
+      // 회원가입 후 자동 로그인 처리 (JWT 쿠키 발급)
+      const token = jwt.sign({ id: newUser.id, username: newUser.username }, JWT_SECRET, { expiresIn: '30d' });
+      res.cookie('token', token, {
+        httpOnly: true,
+        path: '/',
+        sameSite: 'lax',
+        maxAge: 30 * 24 * 60 * 60 * 1000
+      });
+
+      return res.json({
+        success: true,
+        message: '회원가입 및 로그인이 완료되었습니다.',
+        user: { username: newUser.username, worship_count: newUser.worship_count || 0 }
+      });
     }
   } catch (err) {
-    console.error(err);
+    console.error("REGISTER ERROR:", err);
     res.status(500).json({ error: '회원가입 중 오류가 발생했습니다.' });
   }
 });
@@ -169,7 +209,9 @@ app.post('/api/auth/register', async (req, res) => {
 // 2. 로그인
 app.post('/api/auth/login', async (req, res) => {
   const { username, password } = req.body;
-  if (!username || !password) {
+  const trimmedUsername = username ? username.trim() : '';
+
+  if (!trimmedUsername || !password) {
     return res.status(400).json({ error: '사용자 이름과 비밀번호를 입력해주세요.' });
   }
 
@@ -177,14 +219,14 @@ app.post('/api/auth/login', async (req, res) => {
     let user = null;
 
     if (isMockDb) {
-      user = mockDb.users.find(u => u.username === username);
+      user = mockDb.users.find(u => u.username.toLowerCase() === trimmedUsername.toLowerCase());
     } else {
       const { data, error } = await supabase
         .from('worship_users')
         .select('*')
-        .eq('username', username)
+        .ilike('username', trimmedUsername)
         .maybeSingle();
-      if (!error) user = data;
+      if (!error && data) user = data;
     }
 
     if (!user) {
@@ -196,18 +238,24 @@ app.post('/api/auth/login', async (req, res) => {
       return res.status(400).json({ error: '사용자 이름 또는 비밀번호가 올바르지 않습니다.' });
     }
 
-    // JWT 발급
-    const token = jwt.sign({ username: user.username }, JWT_SECRET, { expiresIn: '30d' });
+    // JWT 발급 (id, username 포함)
+    const token = jwt.sign({ id: user.id, username: user.username }, JWT_SECRET, { expiresIn: '30d' });
     res.cookie('token', token, {
       httpOnly: true,
+      path: '/',
+      sameSite: 'lax',
       maxAge: 30 * 24 * 60 * 60 * 1000 // 30일
     });
 
     res.json({
       success: true,
       user: {
+        id: user.id,
         username: user.username,
-        worship_count: user.worship_count
+        worship_count: user.worship_count || 0,
+        coins: user.coins || 100,
+        inventory: user.inventory || [],
+        equipped_skin: user.equipped_skin || 'default'
       }
     });
   } catch (err) {
@@ -218,7 +266,7 @@ app.post('/api/auth/login', async (req, res) => {
 
 // 3. 로그아웃
 app.post('/api/auth/logout', (req, res) => {
-  res.clearCookie('token');
+  res.clearCookie('token', { path: '/' });
   res.json({ success: true, message: '로그아웃 되었습니다.' });
 });
 
@@ -233,27 +281,218 @@ app.get('/api/auth/me', authenticateToken, async (req, res) => {
 
     if (isMockDb) {
       const user = mockDb.users.find(u => u.id === req.user.id);
-      if (user) userDetails = { username: user.username, worship_count: user.worship_count };
+      if (user) userDetails = user;
     } else {
       const { data, error } = await supabase
         .from('worship_users')
-        .select('username, worship_count')
+        .select('*')
         .eq('id', req.user.id)
-        .single();
+        .maybeSingle();
       if (data && !error) userDetails = data;
     }
 
     if (!userDetails) {
-      res.clearCookie('token');
+      res.clearCookie('token', { path: '/' });
       return res.json({ loggedIn: false });
     }
 
     res.json({
       loggedIn: true,
-      user: userDetails
+      user: {
+        id: userDetails.id,
+        username: userDetails.username,
+        worship_count: userDetails.worship_count || 0,
+        coins: userDetails.coins || 100,
+        inventory: userDetails.inventory || [],
+        equipped_skin: userDetails.equipped_skin || 'default',
+        last_attendance: userDetails.last_attendance || null
+      }
     });
   } catch (err) {
     res.status(500).json({ error: '오류가 발생했습니다.' });
+  }
+});
+
+// 4-1. 퐁퐁 상점 구매 API
+app.post('/api/shop/buy', authenticateToken, async (req, res) => {
+  if (!req.user) {
+    return res.status(401).json({ error: '로그인이 필요합니다.' });
+  }
+
+  const { itemId, price } = req.body;
+  const cost = parseInt(price) || 0;
+
+  try {
+    if (isMockDb) {
+      const user = mockDb.users.find(u => u.id === req.user.id);
+      if (!user) return res.status(404).json({ error: '사용자를 찾을 수 없습니다.' });
+
+      user.coins = user.coins || 100;
+      if (user.coins < cost) {
+        return res.status(400).json({ error: '퐁퐁코인이 부족합니다!' });
+      }
+
+      user.coins -= cost;
+      user.inventory = user.inventory || [];
+      if (!user.inventory.includes(itemId)) {
+        user.inventory.push(itemId);
+      }
+      if (itemId.startsWith('skin_')) {
+        user.equipped_skin = itemId;
+      }
+      saveLocalDb();
+
+      return res.json({
+        success: true,
+        coins: user.coins,
+        inventory: user.inventory,
+        equipped_skin: user.equipped_skin
+      });
+    } else {
+      const { data: user } = await supabase.from('worship_users').select('*').eq('id', req.user.id).maybeSingle();
+      const currentCoins = (user && user.coins !== null && user.coins !== undefined) ? parseInt(user.coins) : 100;
+      
+      if (currentCoins < cost) {
+        return res.status(400).json({ error: '퐁퐁코인이 부족합니다!' });
+      }
+
+      const nextCoins = currentCoins - cost;
+      let inventory = Array.isArray(user.inventory) ? user.inventory : [];
+      if (!inventory.includes(itemId)) inventory.push(itemId);
+      
+      let equipped_skin = user.equipped_skin || 'default';
+      if (itemId.startsWith('skin_')) equipped_skin = itemId;
+
+      const { data: updated } = await supabase
+        .from('worship_users')
+        .update({ coins: nextCoins, inventory, equipped_skin })
+        .eq('id', req.user.id)
+        .select()
+        .maybeSingle();
+
+      return res.json({
+        success: true,
+        coins: updated ? updated.coins : nextCoins,
+        inventory: updated ? updated.inventory : inventory,
+        equipped_skin: updated ? updated.equipped_skin : equipped_skin
+      });
+    }
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: '상점 구매 처리 실패' });
+  }
+});
+
+// 4-2. 럭키 가챠 뽑기 API
+app.post('/api/gacha/roll', authenticateToken, async (req, res) => {
+  if (!req.user) {
+    return res.status(401).json({ error: '로그인이 필요합니다.' });
+  }
+
+  const cost = 100;
+  const gachaPool = [
+    { name: '🍮 전설의 자이언트 커스터드', rarity: 'Legendary', icon: '🍮' },
+    { name: '🍩 다이아몬드 도넛', rarity: 'Epic', icon: '🍩' },
+    { name: '🍨 성스러운 빙수', rarity: 'Rare', icon: '🍨' },
+    { name: '🎂 축복의 케이크', rarity: 'Rare', icon: '🎂' },
+    { name: '🍯 마법의 꿀단지', rarity: 'Normal', icon: '🍯' },
+    { name: '🍪 바삭쿠키', rarity: 'Normal', icon: '🍪' }
+  ];
+
+  const loot = gachaPool[Math.floor(Math.random() * gachaPool.length)];
+
+  try {
+    if (isMockDb) {
+      const user = mockDb.users.find(u => u.id === req.user.id);
+      user.coins = user.coins || 100;
+      if (user.coins < cost) {
+        return res.status(400).json({ error: '퐁퐁코인이 부족합니다! (100 PPC 필요)' });
+      }
+      user.coins -= cost;
+      user.inventory = user.inventory || [];
+      user.inventory.push(loot.name);
+      saveLocalDb();
+
+      return res.json({ success: true, loot, coins: user.coins, inventory: user.inventory });
+    } else {
+      const { data: user } = await supabase.from('worship_users').select('*').eq('id', req.user.id).maybeSingle();
+      const currentCoins = (user && user.coins !== null) ? parseInt(user.coins) : 100;
+      if (currentCoins < cost) {
+        return res.status(400).json({ error: '퐁퐁코인이 부족합니다! (100 PPC 필요)' });
+      }
+
+      let inventory = Array.isArray(user.inventory) ? user.inventory : [];
+      inventory.push(loot.name);
+      const nextCoins = currentCoins - cost;
+
+      const { data: updated } = await supabase
+        .from('worship_users')
+        .update({ coins: nextCoins, inventory })
+        .eq('id', req.user.id)
+        .select()
+        .maybeSingle();
+
+      return res.json({ success: true, loot, coins: updated ? updated.coins : nextCoins, inventory: updated ? updated.inventory : inventory });
+    }
+  } catch (err) {
+    res.status(500).json({ error: '가챠 뽑기 오류' });
+  }
+});
+
+// 4-3. 일일 출석체크 API
+app.post('/api/attendance/claim', authenticateToken, async (req, res) => {
+  if (!req.user) {
+    return res.status(401).json({ error: '로그인이 필요합니다.' });
+  }
+
+  const today = new Date().toISOString().split('T')[0];
+
+  try {
+    if (isMockDb) {
+      const user = mockDb.users.find(u => u.id === req.user.id);
+      if (user.last_attendance === today) {
+        return res.status(400).json({ error: '오늘 이미 출석체크 보상을 받으셨습니다!' });
+      }
+      user.last_attendance = today;
+      user.coins = (user.coins || 100) + 150;
+      user.worship_count = (user.worship_count || 0) + 30;
+      saveLocalDb();
+
+      return res.json({
+        success: true,
+        message: '출석 완료! +150 퐁퐁코인 & +30 숭배수 획득!',
+        coins: user.coins,
+        worship_count: user.worship_count,
+        last_attendance: today
+      });
+    } else {
+      const { data: user } = await supabase.from('worship_users').select('*').eq('id', req.user.id).maybeSingle();
+      if (user && user.last_attendance === today) {
+        return res.status(400).json({ error: '오늘 이미 출석체크 보상을 받으셨습니다!' });
+      }
+
+      const currentCoins = (user && user.coins !== null) ? parseInt(user.coins) : 100;
+      const currentWorship = (user && user.worship_count !== null) ? parseInt(user.worship_count) : 0;
+      const nextCoins = currentCoins + 150;
+      const nextWorship = currentWorship + 30;
+
+      const { data: updated } = await supabase
+        .from('worship_users')
+        .update({ coins: nextCoins, worship_count: nextWorship, last_attendance: today })
+        .eq('id', req.user.id)
+        .select()
+        .maybeSingle();
+
+      return res.json({
+        success: true,
+        message: '출석 완료! +150 퐁퐁코인 & +30 숭배수 획득!',
+        coins: updated ? updated.coins : nextCoins,
+        worship_count: updated ? updated.worship_count : nextWorship,
+        last_attendance: today
+      });
+    }
+  } catch (err) {
+    res.status(500).json({ error: '출석체크 처리 오류' });
   }
 });
 
@@ -262,18 +501,21 @@ app.post('/api/worship', authenticateToken, async (req, res) => {
   try {
     let globalCount = 0;
     let userCount = null;
+    let userCoins = null;
 
     if (isMockDb) {
       // 1. 글로벌 숭배 카운트 증가
       mockDb.globalCount += 1;
       globalCount = mockDb.globalCount;
 
-      // 2. 로그인 상태면 유저 숭배수도 증가
+      // 2. 로그인 상태면 유저 숭배수 및 코인도 증가
       if (req.user) {
         const user = mockDb.users.find(u => u.id === req.user.id);
         if (user) {
           user.worship_count += 1;
+          user.coins = (user.coins || 100) + 2;
           userCount = user.worship_count;
+          userCoins = user.coins;
         }
       }
       saveLocalDb();
@@ -283,57 +525,54 @@ app.post('/api/worship', authenticateToken, async (req, res) => {
         .rpc('increment_worship_global');
 
       if (gError) {
-        // RPC가 없거나 오류일 경우 upsert로 강제 증가 처리
-        const { data: selectG, error: sGError } = await supabase
+        const { data: selectG } = await supabase
           .from('worship_global')
           .select('count')
           .eq('id', 1)
           .maybeSingle();
         
-        if (sGError) console.error("Error selectG:", sGError);
-        const currentGCount = (selectG && selectG.count) ? parseInt(selectG.count) : 0;
+        const currentGCount = (selectG && selectG.count !== null && selectG.count !== undefined) ? parseInt(selectG.count) : 0;
+        const nextGCount = currentGCount + 1;
         
-        const { data: updatedG, error: upGError } = await supabase
+        const { data: updatedG } = await supabase
           .from('worship_global')
-          .upsert({ id: 1, count: currentGCount + 1 })
+          .upsert({ id: 1, count: nextGCount })
           .select('count')
-          .single();
+          .maybeSingle();
         
-        if (upGError) console.error("Error upserting global count:", upGError);
-        globalCount = updatedG ? updatedG.count : currentGCount + 1;
+        globalCount = updatedG ? parseInt(updatedG.count) : nextGCount;
       } else {
-        globalCount = globalData;
+        globalCount = parseInt(globalData);
       }
 
-      // 로그인 상태면 유저 숭배수 증가
+      // 로그인 상태면 유저 숭배수 및 코인 증가
       if (req.user) {
         const { data: uData, error: uError } = await supabase
           .rpc('increment_worship_user', { user_id: req.user.id });
 
         if (uError) {
-          console.warn("RPC increment_worship_user failed, falling back to select & update:", uError.message || uError);
-          const { data: selectU, error: sUError } = await supabase
+          const { data: selectU } = await supabase
             .from('worship_users')
-            .select('worship_count')
+            .select('worship_count, coins')
             .eq('id', req.user.id)
             .maybeSingle();
           
-          if (sUError) console.error("Error selectU:", sUError);
-          const currentUCount = (selectU && selectU.worship_count) ? parseInt(selectU.worship_count) : 0;
+          const currentUCount = (selectU && selectU.worship_count !== null && selectU.worship_count !== undefined) ? parseInt(selectU.worship_count) : 0;
+          const currentCoins = (selectU && selectU.coins !== null && selectU.coins !== undefined) ? parseInt(selectU.coins) : 100;
+          const nextUCount = currentUCount + 1;
+          const nextCoins = currentCoins + 2;
           
-          const { data: updatedU, error: uUError } = await supabase
+          const { data: updatedU } = await supabase
             .from('worship_users')
-            .update({ worship_count: currentUCount + 1 })
+            .update({ worship_count: nextUCount, coins: nextCoins })
             .eq('id', req.user.id)
-            .select('worship_count')
-            .single();
+            .select('worship_count, coins')
+            .maybeSingle();
           
-          if (uUError) console.error("Error updatedU:", uUError);
-          if (updatedU) {
-            userCount = updatedU.worship_count;
-          }
+          userCount = updatedU ? parseInt(updatedU.worship_count) : nextUCount;
+          userCoins = updatedU ? parseInt(updatedU.coins) : nextCoins;
         } else {
-          userCount = uData;
+          userCount = parseInt(uData);
         }
       }
     }
@@ -341,7 +580,8 @@ app.post('/api/worship', authenticateToken, async (req, res) => {
     res.json({
       success: true,
       globalCount,
-      userCount
+      userCount,
+      userCoins
     });
   } catch (err) {
     console.error(err);
@@ -363,11 +603,11 @@ app.get('/api/worship/stats', authenticateToken, async (req, res) => {
       }
     } else {
       const { data: gData } = await supabase.from('worship_global').select('count').eq('id', 1).maybeSingle();
-      globalCount = (gData && gData.count !== null) ? gData.count : 0;
+      globalCount = (gData && gData.count !== null && gData.count !== undefined) ? parseInt(gData.count) : 0;
 
       if (req.user) {
         const { data: uData } = await supabase.from('worship_users').select('worship_count').eq('id', req.user.id).maybeSingle();
-        userCount = (uData && uData.worship_count !== null) ? uData.worship_count : 0;
+        userCount = (uData && uData.worship_count !== null && uData.worship_count !== undefined) ? parseInt(uData.worship_count) : 0;
       }
     }
 
@@ -388,14 +628,16 @@ app.get('/api/worship/leaderboard', async (req, res) => {
       list = [...mockDb.users]
         .sort((a, b) => b.worship_count - a.worship_count)
         .slice(0, 10)
-        .map(u => ({ username: u.username, worship_count: u.worship_count }));
+        .map(u => ({ id: u.id, username: u.username, worship_count: parseInt(u.worship_count) || 0 }));
     } else {
       const { data, error } = await supabase
         .from('worship_users')
-        .select('username, worship_count')
+        .select('id, username, worship_count')
         .order('worship_count', { ascending: false })
         .limit(10);
-      if (!error && data) list = data;
+      if (!error && data) {
+        list = data.map(u => ({ id: u.id, username: u.username, worship_count: parseInt(u.worship_count) || 0 }));
+      }
     }
     res.json(list);
   } catch (err) {
@@ -437,7 +679,7 @@ app.post('/api/posts', authenticateToken, async (req, res) => {
   try {
     if (isMockDb) {
       const newPost = {
-        id: mockDb.posts.length + 1,
+        id: Date.now(),
         username: req.user.username,
         content: content.trim(),
         image_data: image_data || null,
@@ -458,6 +700,74 @@ app.post('/api/posts', authenticateToken, async (req, res) => {
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: '방명록 작성 오류' });
+  }
+});
+
+// 9-1. 게시판 글 삭제 API
+app.delete('/api/posts/:id', authenticateToken, async (req, res) => {
+  if (!req.user) {
+    return res.status(401).json({ error: '로그인이 필요합니다.' });
+  }
+
+  const postId = req.params.id;
+
+  try {
+    if (isMockDb) {
+      const index = mockDb.posts.findIndex(p => String(p.id) === String(postId) && p.username === req.user.username);
+      if (index === -1) {
+        return res.status(403).json({ error: '본인의 게시글만 삭제할 수 있습니다.' });
+      }
+      mockDb.posts.splice(index, 1);
+      saveLocalDb();
+      return res.json({ success: true, message: '게시글이 삭제되었습니다.' });
+    } else {
+      const { data: post, error: findErr } = await supabase
+        .from('worship_posts')
+        .select('*')
+        .eq('id', postId)
+        .maybeSingle();
+
+      if (findErr || !post) {
+        return res.status(404).json({ error: '게시글을 찾을 수 없습니다.' });
+      }
+
+      if (post.username !== req.user.username) {
+        return res.status(403).json({ error: '본인의 게시글만 삭제할 수 있습니다.' });
+      }
+
+      const { error: delErr } = await supabase
+        .from('worship_posts')
+        .delete()
+        .eq('id', postId);
+
+      if (delErr) throw delErr;
+
+      return res.json({ success: true, message: '게시글이 삭제되었습니다.' });
+    }
+  } catch (err) {
+    console.error('Delete post error:', err);
+    res.status(500).json({ error: '게시글 삭제 중 오류가 발생했습니다.' });
+  }
+});
+
+// 9-2. 게시판 글 반응 API (좋아요/숭배 공감)
+app.post('/api/posts/:id/react', async (req, res) => {
+  const postId = req.params.id;
+  try {
+    if (isMockDb) {
+      const post = mockDb.posts.find(p => String(p.id) === String(postId));
+      if (!post) return res.status(404).json({ error: '게시글이 존재하지 않습니다.' });
+      post.reactions = (post.reactions || 0) + 1;
+      saveLocalDb();
+      return res.json({ success: true, reactions: post.reactions });
+    } else {
+      const { data: post } = await supabase.from('worship_posts').select('reactions').eq('id', postId).maybeSingle();
+      const current = (post && post.reactions) ? parseInt(post.reactions) : 0;
+      const { data: updated } = await supabase.from('worship_posts').update({ reactions: current + 1 }).eq('id', postId).select('reactions').maybeSingle();
+      return res.json({ success: true, reactions: updated ? parseInt(updated.reactions) : current + 1 });
+    }
+  } catch (err) {
+    res.status(500).json({ error: '반응 처리 오류' });
   }
 });
 
@@ -493,6 +803,137 @@ app.get('/api/oracle', (req, res) => {
     luckyPudding: randomPudding,
     purityScore: score
   });
+});
+
+// 11. 액자 갤러리 목록 조회 API
+app.get('/api/frames', async (req, res) => {
+  try {
+    let list = [];
+    if (!isMockDb) {
+      try {
+        const { data, error } = await supabase
+          .from('worship_frames')
+          .select('*')
+          .order('created_at', { ascending: false })
+          .limit(50);
+        if (!error && data) list = data;
+        else throw error;
+      } catch (e) {
+        mockDb.frames = mockDb.frames || [];
+        list = [...mockDb.frames].sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
+      }
+    } else {
+      mockDb.frames = mockDb.frames || [];
+      list = [...mockDb.frames].sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
+    }
+    res.json(list);
+  } catch (err) {
+    res.status(500).json({ error: '액자 갤러리 조회 오류' });
+  }
+});
+
+// 12. 액자 사진 업로드 API
+app.post('/api/frames', authenticateToken, async (req, res) => {
+  if (!req.user) {
+    return res.status(401).json({ error: '로그인이 필요합니다.' });
+  }
+
+  const { title, image_data, frame_style } = req.body;
+  if (!image_data) {
+    return res.status(400).json({ error: '이미지를 첨부해 주세요.' });
+  }
+
+  const newTitle = title && title.trim() !== '' ? title.trim() : '성스러운 퐁퐁 사진';
+  const style = frame_style || 'frame-gold';
+  const newFrame = {
+    id: Date.now(),
+    username: req.user.username,
+    title: newTitle,
+    image_data,
+    frame_style: style,
+    reactions: 0,
+    created_at: new Date().toISOString()
+  };
+
+  try {
+    if (!isMockDb) {
+      try {
+        const { data, error } = await supabase
+          .from('worship_frames')
+          .insert([{ username: req.user.username, title: newTitle, image_data, frame_style: style, reactions: 0 }])
+          .select()
+          .single();
+        if (!error && data) {
+          return res.json({ success: true, frame: data });
+        }
+      } catch (e) {
+        // Fallback to local storage if Supabase table worship_frames does not exist
+      }
+    }
+
+    mockDb.frames = mockDb.frames || [];
+    mockDb.frames.unshift(newFrame);
+    saveLocalDb();
+    return res.json({ success: true, frame: newFrame });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: '액자 게시 중 오류 발생' });
+  }
+});
+
+// 13. 액자 공감 API
+app.post('/api/frames/:id/react', async (req, res) => {
+  const frameId = req.params.id;
+  try {
+    if (!isMockDb) {
+      try {
+        const { data: frame } = await supabase.from('worship_frames').select('reactions').eq('id', frameId).maybeSingle();
+        const current = (frame && frame.reactions) ? parseInt(frame.reactions) : 0;
+        const { data: updated } = await supabase.from('worship_frames').update({ reactions: current + 1 }).eq('id', frameId).select('reactions').maybeSingle();
+        if (updated) return res.json({ success: true, reactions: parseInt(updated.reactions) });
+      } catch (e) {}
+    }
+
+    mockDb.frames = mockDb.frames || [];
+    const frame = mockDb.frames.find(f => String(f.id) === String(frameId));
+    if (!frame) return res.status(404).json({ error: '액자를 찾을 수 없습니다.' });
+    frame.reactions = (frame.reactions || 0) + 1;
+    saveLocalDb();
+    return res.json({ success: true, reactions: frame.reactions });
+  } catch (err) {
+    res.status(500).json({ error: '공감 오류' });
+  }
+});
+
+// 14. 액자 삭제 API
+app.delete('/api/frames/:id', authenticateToken, async (req, res) => {
+  if (!req.user) {
+    return res.status(401).json({ error: '로그인이 필요합니다.' });
+  }
+
+  const frameId = req.params.id;
+
+  try {
+    if (!isMockDb) {
+      try {
+        const { data: frame } = await supabase.from('worship_frames').select('*').eq('id', frameId).maybeSingle();
+        if (frame) {
+          if (frame.username !== req.user.username) return res.status(403).json({ error: '본인의 액자만 삭제할 수 있습니다.' });
+          await supabase.from('worship_frames').delete().eq('id', frameId);
+          return res.json({ success: true, message: '액자가 삭제되었습니다.' });
+        }
+      } catch (e) {}
+    }
+
+    mockDb.frames = mockDb.frames || [];
+    const idx = mockDb.frames.findIndex(f => String(f.id) === String(frameId) && f.username === req.user.username);
+    if (idx === -1) return res.status(403).json({ error: '본인의 액자만 삭제할 수 있습니다.' });
+    mockDb.frames.splice(idx, 1);
+    saveLocalDb();
+    return res.json({ success: true, message: '액자가 삭제되었습니다.' });
+  } catch (err) {
+    res.status(500).json({ error: '액자 삭제 오류' });
+  }
 });
 
 // 메인 페이지 라우트 백업

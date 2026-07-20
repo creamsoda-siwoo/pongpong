@@ -112,18 +112,280 @@ const gospelChapters = [
   }
 ];
 
-// 글로벌 애플리케이션 상태
+const tarotCardsData = [
+  { id: 1, name: "🍮 커스터드 푸딩의 축복", icon: "🍮", desc: "달콤하고 편안한 기운이 당신을 감쌉니다. 순조로운 하루가 예상됩니다." },
+  { id: 2, name: "⚡ 퐁퐁푸틴의 시련", icon: "⚡", desc: "작은 장애물이 나타날 수 있으나, 선한 마음을 잃지 않으면 이겨낼 것입니다." },
+  { id: 3, name: "🌟 황금 푸딩의 영광", icon: "🌟", desc: "상상치 못한 큰 행운과 명예가 당신을 찾아옵니다." },
+  { id: 4, name: "📜 지혜의 84점", icon: "📜", desc: "지적 능력과 순수한 직관이 빛을 발하는 순간입니다." },
+  { id: 5, name: "💖 동료의 연대", icon: "💖", desc: "친구들과 힘을 모으면 어떤 어려움도 나눌 수 있습니다." },
+  { id: 6, name: "👑 신성한 마스터", icon: "👑", desc: "마음의 평화와 승리가 완벽히 주어집니다." }
+];
+
+const achievementsList = [
+  { id: 'first_worship', title: '🐣 첫 걸음', desc: '퐁퐁푸린님께 첫 경배 드리기', icon: '🐣' },
+  { id: 'combo_master', title: '⚡ 콤보 마스터', desc: '10연속 콤보 경배 달성', icon: '⚡' },
+  { id: 'game_champion', title: '🎮 푸딩 챔피언', desc: '푸딩 캐치 게임 50점 이상 획득', icon: '🎮' },
+  { id: 'memory_master', title: '🃏 푸딩 메모리 마스터', desc: '푸딩 짝맞추기 게임 클리어', icon: '🃏' },
+  { id: 'smash_master', title: '💥 푸틴 퇴치 영웅', desc: '푸틴 퇴치전 80점 이상 달성', icon: '💥' },
+  { id: 'tarot_reader', title: '🔮 운명의 신도', desc: '퐁퐁 타로 운세 확인하기', icon: '🔮' },
+  { id: 'gospel_reader', title: '📜 복음서 탐구자', desc: '복음서 구절 검색 또는 복사하기', icon: '📜' },
+  { id: 'post_author', title: '✍️ 서약 기록자', desc: '방명록에 첫 숭배 한마디 남기기', icon: '✍️' },
+  { id: 'worship_50', title: '🍮 푸딩 수호자', desc: '누적 숭배 50회 달성', icon: '🍮' },
+  { id: 'worship_100', title: '👑 퐁퐁 대사제', desc: '누적 숭배 100회 달성', icon: '👑' }
+];
+
 const state = {
   user: null,
   isLoggedIn: false,
   globalWorshipCount: 0,
   userWorshipCount: 0,
-  activeChapter: 0
+  activeChapter: 0,
+  gospelFontSize: 17,
+  combo: 0,
+  comboTimer: null
 };
 
+let pendingGlobalClicks = 0;
+let pendingUserClicks = 0;
 let selectedImageData = null;
 
-// DOM 요소 캐시
+let soundEnabled = localStorage.getItem('pong_sound_enabled') !== 'false';
+let bgmEnabled = localStorage.getItem('pong_bgm_enabled') === 'true';
+let isDarkMode = localStorage.getItem('pong_dark_mode') === 'true';
+let unlockedAchievements = JSON.parse(localStorage.getItem('pong_achievements') || '[]');
+
+let audioCtx = null;
+let bgmInterval = null;
+
+function initAudioContext() {
+  if (!audioCtx) {
+    audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+  }
+  if (audioCtx.state === 'suspended') {
+    audioCtx.resume();
+  }
+}
+
+function playChimeSound(freqMult = 1) {
+  if (!soundEnabled) return;
+  try {
+    initAudioContext();
+    const osc = audioCtx.createOscillator();
+    const gain = audioCtx.createGain();
+    
+    const baseFreq = (587.33 + Math.random() * 150) * freqMult;
+    osc.type = 'sine';
+    osc.frequency.setValueAtTime(baseFreq, audioCtx.currentTime);
+    osc.frequency.exponentialRampToValueAtTime(baseFreq * 1.5, audioCtx.currentTime + 0.08);
+
+    gain.gain.setValueAtTime(0.2, audioCtx.currentTime);
+    gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.18);
+
+    osc.connect(gain);
+    gain.connect(audioCtx.destination);
+
+    osc.start();
+    osc.stop(audioCtx.currentTime + 0.18);
+  } catch (e) {}
+}
+
+function playFanfareSound() {
+  if (!soundEnabled) return;
+  try {
+    initAudioContext();
+    const notes = [523.25, 659.25, 783.99, 1046.50];
+    notes.forEach((freq, idx) => {
+      const osc = audioCtx.createOscillator();
+      const gain = audioCtx.createGain();
+      osc.type = 'triangle';
+      osc.frequency.setValueAtTime(freq, audioCtx.currentTime + idx * 0.08);
+
+      gain.gain.setValueAtTime(0.2, audioCtx.currentTime + idx * 0.08);
+      gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + idx * 0.08 + 0.3);
+
+      osc.connect(gain);
+      gain.connect(audioCtx.destination);
+
+      osc.start(audioCtx.currentTime + idx * 0.08);
+      osc.stop(audioCtx.currentTime + idx * 0.08 + 0.3);
+    });
+  } catch (e) {}
+}
+
+function toggleBGM() {
+  bgmEnabled = !bgmEnabled;
+  localStorage.setItem('pong_bgm_enabled', bgmEnabled);
+  updateBgmUI();
+
+  if (bgmEnabled) {
+    startBGM();
+  } else {
+    stopBGM();
+  }
+}
+
+function startBGM() {
+  try {
+    initAudioContext();
+    stopBGM();
+
+    const chords = [
+      [261.63, 329.63, 392.00],
+      [220.00, 261.63, 329.63],
+      [174.61, 220.00, 261.63],
+      [196.00, 246.94, 293.66]
+    ];
+    let chordIdx = 0;
+
+    bgmInterval = setInterval(() => {
+      if (!bgmEnabled) return;
+      const chord = chords[chordIdx % chords.length];
+      chordIdx++;
+
+      chord.forEach(freq => {
+        const osc = audioCtx.createOscillator();
+        const gain = audioCtx.createGain();
+
+        osc.type = 'sine';
+        osc.frequency.setValueAtTime(freq, audioCtx.currentTime);
+
+        gain.gain.setValueAtTime(0.02, audioCtx.currentTime);
+        gain.gain.exponentialRampToValueAtTime(0.0001, audioCtx.currentTime + 2.8);
+
+        osc.connect(gain);
+        gain.connect(audioCtx.destination);
+
+        osc.start();
+        osc.stop(audioCtx.currentTime + 2.8);
+      });
+    }, 3000);
+  } catch (e) {}
+}
+
+function stopBGM() {
+  if (bgmInterval) {
+    clearInterval(bgmInterval);
+    bgmInterval = null;
+  }
+}
+
+function updateBgmUI() {
+  const btn = document.getElementById('bgmToggleBtn');
+  if (btn) {
+    if (bgmEnabled) {
+      btn.classList.remove('muted');
+      btn.innerHTML = `<i class="fa-solid fa-music"></i>`;
+      btn.title = "BGM 켜짐 (클릭하여 끄기)";
+    } else {
+      btn.classList.add('muted');
+      btn.innerHTML = `<i class="fa-solid fa-volume-xmark"></i>`;
+      btn.title = "BGM 꺼짐 (클릭하여 켜기)";
+    }
+  }
+}
+
+window.toggleSound = function() {
+  soundEnabled = !soundEnabled;
+  localStorage.setItem('pong_sound_enabled', soundEnabled);
+  updateSoundUI();
+  if (soundEnabled) playChimeSound();
+};
+
+function updateSoundUI() {
+  const btn = document.getElementById('soundToggleBtn');
+  if (btn) {
+    if (soundEnabled) {
+      btn.classList.remove('muted');
+      btn.innerHTML = `<i class="fa-solid fa-volume-high"></i>`;
+    } else {
+      btn.classList.add('muted');
+      btn.innerHTML = `<i class="fa-solid fa-volume-xmark"></i>`;
+    }
+  }
+}
+
+window.toggleTheme = function() {
+  isDarkMode = !isDarkMode;
+  localStorage.setItem('pong_dark_mode', isDarkMode);
+  applyTheme();
+};
+
+function applyTheme() {
+  if (isDarkMode) {
+    document.body.classList.add('dark-mode');
+  } else {
+    document.body.classList.remove('dark-mode');
+  }
+  const btn = document.getElementById('themeToggleBtn');
+  if (btn) {
+    btn.innerHTML = `<i class="fa-solid ${isDarkMode ? 'fa-sun' : 'fa-moon'}"></i>`;
+  }
+}
+
+function getRankTitle(count) {
+  const c = parseInt(count) || 0;
+  if (c >= 500) return '👑 퐁퐁 신성 마스터';
+  if (c >= 100) return '📜 성스러운 대사제';
+  if (c >= 50) return '⚔️ 퐁퐁 기사단';
+  if (c >= 10) return '🍮 푸딩 수호자';
+  return '🐣 초보 숭배자';
+}
+
+function updateUserRankBadge(count) {
+  const badgeEl = document.getElementById('userRankBadge');
+  if (badgeEl) {
+    badgeEl.innerText = getRankTitle(count);
+  }
+}
+
+function updateShrineLevelProgress() {
+  const total = state.globalWorshipCount + pendingGlobalClicks;
+  const level = Math.floor(total / 100) + 1;
+  const currentLevelXp = total % 100;
+  
+  const levelBadge = document.getElementById('shrineLevelBadge');
+  const xpText = document.getElementById('shrineXpText');
+  const bar = document.getElementById('shrineProgressBar');
+
+  if (levelBadge) levelBadge.innerText = `LV.${level} 성스러운 푸딩 성지`;
+  if (xpText) xpText.innerText = `다음 성전 성화까지 ${currentLevelXp}/100 숭배`;
+  if (bar) bar.style.width = `${currentLevelXp}%`;
+}
+
+function unlockAchievement(id) {
+  if (!unlockedAchievements.includes(id)) {
+    unlockedAchievements.push(id);
+    localStorage.setItem('pong_achievements', JSON.stringify(unlockedAchievements));
+    const ach = achievementsList.find(a => a.id === id);
+    if (ach) {
+      showToast(`🏆 업적 달성! [${ach.title}]`);
+      playFanfareSound();
+    }
+  }
+}
+
+function renderTrophyModal() {
+  const grid = document.getElementById('trophyGrid');
+  if (!grid) return;
+  grid.innerHTML = '';
+
+  achievementsList.forEach(ach => {
+    const isUnlocked = unlockedAchievements.includes(ach.id);
+    const card = document.createElement('div');
+    card.className = `trophy-card ${isUnlocked ? 'unlocked' : ''}`;
+    card.innerHTML = `
+      <div class="trophy-icon">${ach.icon}</div>
+      <div class="trophy-title">${ach.title}</div>
+      <div class="trophy-desc">${ach.desc}</div>
+      <div style="font-size:11px; margin-top:6px; font-weight:bold; color:${isUnlocked ? '#4CAF50' : '#888'}">
+        ${isUnlocked ? '✅ 달성 완료' : '🔒 미해금'}
+      </div>
+    `;
+    grid.appendChild(card);
+  });
+}
+
+// DOM 캐시
 const el = {
   bgParticles: document.getElementById('bgParticles'),
   authSection: document.getElementById('authSection'),
@@ -142,40 +404,44 @@ const el = {
   registerForm: document.getElementById('registerForm')
 };
 
-// --- 초기화 작업 ---
+// --- 초기화 ---
 document.addEventListener('DOMContentLoaded', () => {
+  applyTheme();
   createBackgroundPuddings();
   initGospel();
+  initTarot();
   checkAuth();
   fetchStats();
   fetchLeaderboard();
   fetchPosts();
+  fetchFrames();
+  updateSoundUI();
+  updateBgmUI();
 
-  // 5초 간격 실시간 갱신 폴링
+  if (bgmEnabled) startBGM();
+
   setInterval(() => {
     fetchStats();
     fetchLeaderboard();
     fetchPosts();
+    fetchFrames();
   }, 5000);
 
-  // 숭배 버튼 클릭 이벤트 등록
   if (el.worshipButton) {
     el.worshipButton.addEventListener('click', handleWorshipClick);
   }
 
-  // 폼 제출 이벤트 등록
   if (el.loginForm) el.loginForm.addEventListener('submit', handleLogin);
   if (el.registerForm) el.registerForm.addEventListener('submit', handleRegister);
 });
 
-// 배경에 둥둥 떠다니는 푸딩 입자 생성
 function createBackgroundPuddings() {
+  if (!el.bgParticles) return;
   const count = 12;
   for (let i = 0; i < count; i++) {
     const pudding = document.createElement('div');
     pudding.classList.add('bg-pudding');
     
-    // 무작위 위치 및 애니메이션 속성 지정
     pudding.style.left = `${Math.random() * 100}vw`;
     pudding.style.width = pudding.style.height = `${Math.random() * 40 + 30}px`;
     pudding.style.animationDelay = `${Math.random() * -20}s`;
@@ -185,8 +451,9 @@ function createBackgroundPuddings() {
   }
 }
 
-// 퐁퐁복음 렌더링
+// 퐁퐁복음
 function initGospel() {
+  if (!el.chapterNav) return;
   el.chapterNav.innerHTML = '';
   gospelChapters.forEach((chapter, index) => {
     const btn = document.createElement('button');
@@ -196,7 +463,6 @@ function initGospel() {
       <i class="fa-solid fa-angle-right"></i>
     `;
     btn.addEventListener('click', () => {
-      // 액티브 클래스 교체
       document.querySelectorAll('.chapter-btn').forEach(b => b.classList.remove('active'));
       btn.classList.add('active');
       renderChapter(index);
@@ -209,18 +475,447 @@ function initGospel() {
 function renderChapter(index) {
   state.activeChapter = index;
   const chapter = gospelChapters[index];
-  el.currentChapterTitle.innerText = chapter.title;
+  if (el.currentChapterTitle) el.currentChapterTitle.innerText = chapter.title;
   
-  el.gospelContent.innerHTML = chapter.verses
-    .map((verse, vIdx) => `
-      <div class="gospel-verse">
-        <span class="gospel-verse-num">${vIdx + 1}절</span>
-        ${verse}
-      </div>
-    `).join('');
+  if (el.gospelContent) {
+    el.gospelContent.style.fontSize = `${state.gospelFontSize}px`;
+    el.gospelContent.innerHTML = chapter.verses
+      .map((verse, vIdx) => `
+        <div class="gospel-verse">
+          <span class="gospel-verse-num">${vIdx + 1}절</span>
+          ${verse}
+        </div>
+      `).join('');
+  }
 }
 
-// --- 로그인 상태 체크 및 UI 업데이트 ---
+window.filterGospelVerses = function() {
+  const query = document.getElementById('gospelSearchInput').value.trim().toLowerCase();
+  if (!query) {
+    renderChapter(state.activeChapter);
+    return;
+  }
+  unlockAchievement('gospel_reader');
+  
+  const chapter = gospelChapters[state.activeChapter];
+  const matched = chapter.verses.filter(v => v.toLowerCase().includes(query));
+  
+  if (matched.length === 0) {
+    el.gospelContent.innerHTML = `<p style="text-align:center; padding:30px; color:var(--dark-brown-light);">"${escapeHTML(query)}" 검색 결과가 없습니다.</p>`;
+  } else {
+    el.gospelContent.innerHTML = matched.map((v, i) => `
+      <div class="gospel-verse">
+        <span class="gospel-verse-num">검색 ${i + 1}</span>
+        ${v.replace(new RegExp(query, 'gi'), match => `<mark style="background:var(--primary-yellow); font-weight:bold;">${match}</mark>`)}
+      </div>
+    `).join('');
+  }
+};
+
+window.adjustFontSize = function(delta) {
+  state.gospelFontSize = Math.min(26, Math.max(14, state.gospelFontSize + delta));
+  if (el.gospelContent) el.gospelContent.style.fontSize = `${state.gospelFontSize}px`;
+};
+
+window.navigateChapter = function(direction) {
+  let nextChapter = state.activeChapter + direction;
+  if (nextChapter < 0) nextChapter = gospelChapters.length - 1;
+  if (nextChapter >= gospelChapters.length) nextChapter = 0;
+
+  const btns = document.querySelectorAll('.chapter-btn');
+  btns.forEach((b, idx) => {
+    if (idx === nextChapter) b.classList.add('active');
+    else b.classList.remove('active');
+  });
+
+  renderChapter(nextChapter);
+};
+
+window.copyCurrentChapter = function() {
+  unlockAchievement('gospel_reader');
+  const chapter = gospelChapters[state.activeChapter];
+  const text = `${chapter.title}\n\n` + chapter.verses.map((v, i) => `${i + 1}절: ${v}`).join('\n');
+  navigator.clipboard.writeText(text).then(() => {
+    showToast(`${chapter.title} 본문이 복사되었습니다.`);
+  }).catch(() => {
+    alert('복사에 실패했습니다.');
+  });
+};
+
+// --- 미니게임 전환 탭 ---
+window.switchMiniGame = function(gameType) {
+  document.getElementById('tabCatchGame').classList.remove('active');
+  document.getElementById('tabMemoryGame').classList.remove('active');
+  document.getElementById('tabSmashGame').classList.remove('active');
+
+  document.getElementById('gameViewCatch').style.display = 'none';
+  document.getElementById('gameViewMemory').style.display = 'none';
+  document.getElementById('gameViewSmash').style.display = 'none';
+
+  if (gameType === 'catch') {
+    document.getElementById('tabCatchGame').classList.add('active');
+    document.getElementById('gameViewCatch').style.display = 'block';
+  } else if (gameType === 'memory') {
+    document.getElementById('tabMemoryGame').classList.add('active');
+    document.getElementById('gameViewMemory').style.display = 'block';
+    startMemoryGame();
+  } else if (gameType === 'smash') {
+    document.getElementById('tabSmashGame').classList.add('active');
+    document.getElementById('gameViewSmash').style.display = 'block';
+  }
+};
+
+// --- 게임 1: 푸딩 캐치 미니게임 ---
+let gameActive = false, gameScore = 0, gameCombo = 0, gameTimer = 30, gameInterval = null, spawnInterval = null;
+let basketX = 50;
+
+window.startPuddingGame = function() {
+  gameActive = true;
+  gameScore = 0;
+  gameCombo = 0;
+  gameTimer = 30;
+
+  document.getElementById('gameScore').innerText = '0';
+  document.getElementById('gameCombo').innerText = '0';
+  document.getElementById('gameTime').innerText = '30';
+  document.getElementById('gameOverlay').style.display = 'none';
+
+  basketX = 50;
+  updateBasketPos();
+
+  clearInterval(gameInterval);
+  clearInterval(spawnInterval);
+
+  gameInterval = setInterval(() => {
+    gameTimer--;
+    document.getElementById('gameTime').innerText = gameTimer;
+    if (gameTimer <= 0) endGame();
+  }, 1000);
+
+  spawnInterval = setInterval(spawnFallingPudding, 600);
+};
+
+function updateBasketPos() {
+  const b = document.getElementById('basket');
+  if (b) b.style.left = `${basketX}%`;
+}
+
+function spawnFallingPudding() {
+  if (!gameActive) return;
+  const area = document.getElementById('gameCanvasArea');
+  if (!area) return;
+
+  const item = document.createElement('div');
+  item.className = 'falling-pudding';
+  const isGolden = Math.random() < 0.2;
+  item.innerText = isGolden ? '🍮' : '🧁';
+  item.style.left = `${Math.random() * 85 + 5}%`;
+  item.style.top = '0px';
+
+  area.appendChild(item);
+
+  let posY = 0;
+  const speed = Math.random() * 3 + 3;
+
+  const fallTimer = setInterval(() => {
+    if (!gameActive) {
+      clearInterval(fallTimer);
+      item.remove();
+      return;
+    }
+
+    posY += speed;
+    item.style.top = `${posY}px`;
+
+    if (posY >= 260 && posY <= 290) {
+      const itemX = parseFloat(item.style.left);
+      if (Math.abs(itemX - basketX) < 12) {
+        clearInterval(fallTimer);
+        item.remove();
+        gameScore += isGolden ? 10 : 5;
+        gameCombo++;
+        if (gameScore >= 50) unlockAchievement('game_champion');
+        playChimeSound(1.3);
+
+        document.getElementById('gameScore').innerText = gameScore;
+        document.getElementById('gameCombo').innerText = gameCombo;
+      }
+    }
+
+    if (posY > 310) {
+      clearInterval(fallTimer);
+      item.remove();
+      gameCombo = 0;
+      document.getElementById('gameCombo').innerText = '0';
+    }
+  }, 20);
+}
+
+function endGame() {
+  gameActive = false;
+  clearInterval(gameInterval);
+  clearInterval(spawnInterval);
+
+  const overlay = document.getElementById('gameOverlay');
+  if (overlay) {
+    overlay.style.display = 'flex';
+    overlay.querySelector('h3').innerText = `게임 종료! 최종 점수: ${gameScore}점`;
+    overlay.querySelector('p').innerText = `훌륭한 푸딩 캐치 실력입니다! 경배 점수 축복을 받으셨습니다.`;
+  }
+}
+
+// --- 게임 2: 푸딩 짝맞추기 (Memory Match) ---
+let memoryCards = [], memoryFlipped = [], memoryMatchedPairs = 0, memoryFlipsCount = 0, memoryTimer = 0, memoryTimerInterval = null;
+
+window.startMemoryGame = function() {
+  const icons = ['🍮', '🧁', '🍨', '🎂', '🍪', '🍩', '🍫', '🍯'];
+  const deck = [...icons, ...icons].sort(() => Math.random() - 0.5);
+
+  memoryCards = deck;
+  memoryFlipped = [];
+  memoryMatchedPairs = 0;
+  memoryFlipsCount = 0;
+  memoryTimer = 0;
+
+  clearInterval(memoryTimerInterval);
+  memoryTimerInterval = setInterval(() => {
+    memoryTimer++;
+    document.getElementById('memoryTime').innerText = memoryTimer;
+  }, 1000);
+
+  document.getElementById('memoryPairs').innerText = '0';
+  document.getElementById('memoryFlips').innerText = '0';
+  document.getElementById('memoryTime').innerText = '0';
+
+  const grid = document.getElementById('memoryGrid');
+  if (!grid) return;
+  grid.innerHTML = '';
+
+  deck.forEach((icon, idx) => {
+    const card = document.createElement('div');
+    card.className = 'memory-card';
+    card.dataset.index = idx;
+    card.dataset.icon = icon;
+    card.innerText = '❓';
+
+    card.addEventListener('click', () => handleMemoryCardClick(card, idx, icon));
+    grid.appendChild(card);
+  });
+};
+
+function handleMemoryCardClick(cardEl, idx, icon) {
+  if (cardEl.classList.contains('flipped') || cardEl.classList.contains('matched') || memoryFlipped.length >= 2) return;
+
+  playChimeSound(1.2);
+  cardEl.classList.add('flipped');
+  cardEl.innerText = icon;
+  memoryFlipped.push({ cardEl, idx, icon });
+
+  if (memoryFlipped.length === 2) {
+    memoryFlipsCount++;
+    document.getElementById('memoryFlips').innerText = memoryFlipsCount;
+
+    const [first, second] = memoryFlipped;
+    if (first.icon === second.icon) {
+      first.cardEl.classList.add('matched');
+      second.cardEl.classList.add('matched');
+      memoryFlipped = [];
+      memoryMatchedPairs++;
+      document.getElementById('memoryPairs').innerText = memoryMatchedPairs;
+      playFanfareSound();
+
+      if (memoryMatchedPairs === 8) {
+        clearInterval(memoryTimerInterval);
+        unlockAchievement('memory_master');
+        showToast(`🎉 축하합니다! ${memoryTime}초 만에 짝맞추기 성공!`);
+      }
+    } else {
+      setTimeout(() => {
+        first.cardEl.classList.remove('flipped');
+        first.cardEl.innerText = '❓';
+        second.cardEl.classList.remove('flipped');
+        second.cardEl.innerText = '❓';
+        memoryFlipped = [];
+      }, 800);
+    }
+  }
+}
+
+// --- 게임 3: 퐁퐁푸틴 퇴치전 (Whack-a-Mole Smash) ---
+let smashScore = 0, smashTime = 25, smashTimerInterval = null, smashPopInterval = null;
+
+window.startSmashGame = function() {
+  smashScore = 0;
+  smashTime = 25;
+
+  document.getElementById('smashScore').innerText = '0';
+  document.getElementById('smashTime').innerText = '25';
+  document.getElementById('smashOverlay').style.display = 'none';
+
+  const grid = document.getElementById('smashGrid');
+  if (!grid) return;
+  grid.innerHTML = '';
+
+  for (let i = 0; i < 9; i++) {
+    const hole = document.createElement('div');
+    hole.className = 'smash-hole';
+
+    const target = document.createElement('div');
+    target.className = 'smash-target';
+    target.dataset.index = i;
+
+    hole.appendChild(target);
+    hole.addEventListener('click', () => hitSmashTarget(target));
+    grid.appendChild(hole);
+  }
+
+  clearInterval(smashTimerInterval);
+  clearInterval(smashPopInterval);
+
+  smashTimerInterval = setInterval(() => {
+    smashTime--;
+    document.getElementById('smashTime').innerText = smashTime;
+    if (smashTime <= 0) endSmashGame();
+  }, 1000);
+
+  smashPopInterval = setInterval(popSmashTarget, 700);
+};
+
+function popSmashTarget() {
+  const targets = document.querySelectorAll('.smash-target');
+  targets.forEach(t => t.classList.remove('up'));
+
+  const randomIdx = Math.floor(Math.random() * targets.length);
+  const target = targets[randomIdx];
+
+  const isPutin = Math.random() < 0.75;
+  target.innerText = isPutin ? '👿' : '🍮';
+  target.dataset.type = isPutin ? 'putin' : 'purin';
+  target.classList.add('up');
+
+  setTimeout(() => {
+    target.classList.remove('up');
+  }, 900);
+}
+
+function hitSmashTarget(targetEl) {
+  if (!targetEl.classList.contains('up')) return;
+  targetEl.classList.remove('up');
+
+  const type = targetEl.dataset.type;
+  if (type === 'putin') {
+    smashScore += 10;
+    playChimeSound(1.5);
+    createFloatingParticleAtEl(targetEl, '+10 👿퇴치!');
+  } else {
+    smashScore = Math.max(0, smashScore - 5);
+    createFloatingParticleAtEl(targetEl, '-5 💥푸린님!');
+  }
+
+  document.getElementById('smashScore').innerText = smashScore;
+  if (smashScore >= 80) unlockAchievement('smash_master');
+}
+
+function createFloatingParticleAtEl(el, text) {
+  const rect = el.getBoundingClientRect();
+  const p = document.createElement('div');
+  p.className = 'worship-particle';
+  p.innerText = text;
+  p.style.left = `${rect.left + rect.width / 2}px`;
+  p.style.top = `${rect.top}px`;
+  p.style.setProperty('--x-dir', '0px');
+  document.body.appendChild(p);
+  setTimeout(() => p.remove(), 800);
+}
+
+function endSmashGame() {
+  clearInterval(smashTimerInterval);
+  clearInterval(smashPopInterval);
+  document.querySelectorAll('.smash-target').forEach(t => t.classList.remove('up'));
+
+  const overlay = document.getElementById('smashOverlay');
+  if (overlay) {
+    overlay.style.display = 'flex';
+    overlay.querySelector('h3').innerText = `퇴치전 완료! 점수: ${smashScore}점`;
+    overlay.querySelector('p').innerText = `악당 퐁퐁푸틴을 물리치고 성전의 평화를 지켰습니다!`;
+  }
+}
+
+// --- 타로 ---
+let selectedTarotCards = [];
+function initTarot() {
+  const grid = document.getElementById('tarotCardsGrid');
+  if (!grid) return;
+  grid.innerHTML = '';
+  selectedTarotCards = [];
+
+  for (let i = 0; i < 6; i++) {
+    const card = document.createElement('div');
+    card.className = 'tarot-card-item';
+    card.innerHTML = `<i class="fa-solid fa-moon"></i>`;
+    card.addEventListener('click', () => selectTarotCard(card, i));
+    grid.appendChild(card);
+  }
+}
+
+function selectTarotCard(cardEl, idx) {
+  if (selectedTarotCards.length >= 3 || cardEl.classList.contains('selected')) return;
+
+  playChimeSound(1.2);
+  cardEl.classList.add('selected');
+  selectedTarotCards.push(idx);
+
+  const hint = document.getElementById('tarotHint');
+  if (hint) {
+    const labels = ['과거', '현재', '미래'];
+    hint.innerText = `${selectedTarotCards.length}/3 장 선택 완료! (${labels[selectedTarotCards.length - 1]} 뽑음)`;
+  }
+
+  if (selectedTarotCards.length === 3) {
+    setTimeout(revealTarotReading, 500);
+  }
+}
+
+function revealTarotReading() {
+  unlockAchievement('tarot_reader');
+  playFanfareSound();
+
+  const grid = document.getElementById('tarotCardsGrid');
+  const resultArea = document.getElementById('tarotReadingResult');
+  const resultCards = document.getElementById('tarotResultCards');
+  const adviceEl = document.getElementById('tarotAdvice');
+
+  if (grid) grid.style.display = 'none';
+  if (resultArea) resultArea.style.display = 'block';
+
+  const shuffled = [...tarotCardsData].sort(() => Math.random() - 0.5);
+  const drawn = [shuffled[0], shuffled[1], shuffled[2]];
+  const positions = ['과거의 기운', '현재의 사명', '미래의 결실'];
+
+  resultCards.innerHTML = drawn.map((card, i) => `
+    <div class="tarot-result-card">
+      <div style="font-size:12px; color:var(--dark-brown-light); font-weight:bold;">${positions[i]}</div>
+      <div class="card-icon">${card.icon}</div>
+      <h4>${card.name}</h4>
+      <p style="font-size:13px; line-height:1.5;">${card.desc}</p>
+    </div>
+  `).join('');
+
+  adviceEl.innerText = `"퐁퐁푸린의 보살핌 속에서 당신의 과거는 감사로, 현재는 기쁨으로, 미래는 더욱 달콤한 푸딩으로 채워질 것입니다. 아멘."`;
+}
+
+window.resetTarotGame = function() {
+  const grid = document.getElementById('tarotCardsGrid');
+  const resultArea = document.getElementById('tarotReadingResult');
+  const hint = document.getElementById('tarotHint');
+
+  if (grid) grid.style.display = 'grid';
+  if (resultArea) resultArea.style.display = 'none';
+  if (hint) hint.innerText = '운명의 타로 카드 3장을 순서대로 선택하세요 (과거 / 현재 / 미래)';
+  initTarot();
+};
+
+// --- 인증 ---
 async function checkAuth() {
   try {
     const res = await fetch('/api/auth/me');
@@ -229,11 +924,19 @@ async function checkAuth() {
     if (data.loggedIn) {
       state.isLoggedIn = true;
       state.user = data.user;
-      state.userWorshipCount = data.user.worship_count;
+      state.userWorshipCount = parseInt(data.user.worship_count) || 0;
+      state.userCoins = (data.user.coins !== undefined && data.user.coins !== null) ? parseInt(data.user.coins) : 100;
+      state.inventory = data.user.inventory || [];
+      state.equippedSkin = data.user.equipped_skin || 'default';
+      applyEquippedSkin(state.equippedSkin);
+
+      if (state.userWorshipCount >= 50) unlockAchievement('worship_50');
+      if (state.userWorshipCount >= 100) unlockAchievement('worship_100');
       updateAuthUI();
     } else {
       state.isLoggedIn = false;
       state.user = null;
+      state.userCoins = 0;
       updateAuthUI();
     }
   } catch (err) {
@@ -243,19 +946,39 @@ async function checkAuth() {
 
 function updateAuthUI() {
   if (state.isLoggedIn && state.user) {
-    // 헤더 로그인 영역 변경
+    const userTitle = getRankTitle(state.userWorshipCount);
     el.authSection.innerHTML = `
+      <div class="coin-badge" style="display:flex; align-items:center; gap:5px; background:rgba(255,210,63,0.2); padding:5px 12px; border-radius:16px; border:1px solid var(--primary-yellow); font-weight:800; font-size:13px; color:var(--dark-brown);">
+        🟡 <span id="headerUserCoins">${state.userCoins.toLocaleString()}</span> <small style="font-size:10px;">PPC</small>
+      </div>
+      <button class="btn btn-secondary btn-sm" onclick="openModal('shopModal')" title="푸딩 마켓 & 가챠 상점"><i class="fa-solid fa-store"></i> 상점</button>
+      <button class="btn btn-secondary btn-sm" onclick="claimDailyAttendance()" title="일일 출석체크"><i class="fa-solid fa-calendar-check"></i> 출석</button>
+      <button class="icon-tool-btn" id="themeToggleBtn" onclick="toggleTheme()" title="다크/라이트 테마 전환">
+        <i class="fa-solid ${isDarkMode ? 'fa-sun' : 'fa-moon'}"></i>
+      </button>
+      <button class="icon-tool-btn ${bgmEnabled ? '' : 'muted'}" id="bgmToggleBtn" onclick="toggleBGM()" title="배경음악 BGM 켜기/끄기">
+        <i class="fa-solid ${bgmEnabled ? 'fa-music' : 'fa-volume-xmark'}"></i>
+      </button>
+      <button class="icon-tool-btn ${soundEnabled ? '' : 'muted'}" id="soundToggleBtn" onclick="toggleSound()" title="소리 효과음 설정">
+        <i class="fa-solid ${soundEnabled ? 'fa-volume-high' : 'fa-volume-xmark'}"></i>
+      </button>
+      <button class="icon-tool-btn trophy-btn" onclick="openModal('trophyModal')" title="성스러운 업적 및 훈장">
+        <i class="fa-solid fa-trophy"></i>
+      </button>
+      <button class="icon-tool-btn" onclick="openModal('idCardModal')" title="공식 숭배 신도증">
+        <i class="fa-solid fa-id-card"></i>
+      </button>
       <div class="user-badge">
-        🍮 <strong>${state.user.username}</strong> 신도
+        🍮 <strong>${escapeHTML(state.user.username)}</strong> <span style="font-size:11px; opacity:0.8;">(${userTitle})</span>
       </div>
       <button class="btn btn-secondary btn-logout" onclick="handleLogout()">로그아웃</button>
     `;
 
-    // 숭배 카운터 보드 업데이트
-    el.userWorshipCount.innerText = state.userWorshipCount.toLocaleString();
+    const displayUserCount = state.userWorshipCount + pendingUserClicks;
+    el.userWorshipCount.innerText = displayUserCount.toLocaleString();
+    updateUserRankBadge(displayUserCount);
     el.loginPrompt.style.display = 'none';
 
-    // 게시판 작성 폼 렌더링
     el.boardWriteContainer.innerHTML = `
       <form id="postForm" onsubmit="handleWritePost(event)">
         <div class="form-group">
@@ -271,25 +994,34 @@ function updateAuthUI() {
       </form>
     `;
   } else {
-    // 비로그인 헤더
     el.authSection.innerHTML = `
+      <button class="icon-tool-btn" id="themeToggleBtn" onclick="toggleTheme()" title="다크/라이트 테마 전환">
+        <i class="fa-solid ${isDarkMode ? 'fa-sun' : 'fa-moon'}"></i>
+      </button>
+      <button class="icon-tool-btn ${bgmEnabled ? '' : 'muted'}" id="bgmToggleBtn" onclick="toggleBGM()" title="배경음악 BGM 켜기/끄기">
+        <i class="fa-solid ${bgmEnabled ? 'fa-music' : 'fa-volume-xmark'}"></i>
+      </button>
+      <button class="icon-tool-btn ${soundEnabled ? '' : 'muted'}" id="soundToggleBtn" onclick="toggleSound()" title="소리 효과음 설정">
+        <i class="fa-solid ${soundEnabled ? 'fa-volume-high' : 'fa-volume-xmark'}"></i>
+      </button>
+      <button class="icon-tool-btn trophy-btn" onclick="openModal('trophyModal')" title="성스러운 업적 및 훈장">
+        <i class="fa-solid fa-trophy"></i>
+      </button>
       <button class="btn btn-secondary" onclick="openModal('loginModal')">로그인</button>
       <button class="btn btn-primary" onclick="openModal('registerModal')">회원가입</button>
     `;
 
-    // 숭배 카운터 보드 초기화
     el.userWorshipCount.innerText = '0';
+    updateUserRankBadge(0);
     el.loginPrompt.style.display = 'block';
 
-    // 게시판 작성 폼을 잠금 메시지로 표시
     el.boardWriteContainer.innerHTML = `
       <p class="login-notice"><i class="fa-solid fa-lock"></i> 숭배 글을 작성하려면 <a href="javascript:void(0)" onclick="openModal('loginModal')">로그인</a>이 필요합니다.</p>
     `;
   }
 }
 
-// --- 통계 & 게시글 데이터 조회 API 통신 ---
-
+// API 통신
 async function fetchStats() {
   try {
     const res = await fetch('/api/worship/stats');
@@ -297,18 +1029,23 @@ async function fetchStats() {
     
     if (data) {
       const serverGlobalCount = parseInt(data.globalCount || 0);
-      // Guard: Only update if the server count is strictly greater (prevents resetting back to old counts during rapid clicks)
       if (serverGlobalCount > state.globalWorshipCount) {
         state.globalWorshipCount = serverGlobalCount;
-        el.globalWorshipCount.innerText = serverGlobalCount.toLocaleString();
       }
+      el.globalWorshipCount.innerText = (state.globalWorshipCount + pendingGlobalClicks).toLocaleString();
+      updateShrineLevelProgress();
       
       if (state.isLoggedIn && data.userCount !== undefined && data.userCount !== null) {
         const serverUserCount = parseInt(data.userCount || 0);
         if (serverUserCount > state.userWorshipCount) {
           state.userWorshipCount = serverUserCount;
-          el.userWorshipCount.innerText = serverUserCount.toLocaleString();
         }
+        const displayUserCount = state.userWorshipCount + pendingUserClicks;
+        el.userWorshipCount.innerText = displayUserCount.toLocaleString();
+        updateUserRankBadge(displayUserCount);
+
+        if (displayUserCount >= 50) unlockAchievement('worship_50');
+        if (displayUserCount >= 100) unlockAchievement('worship_100');
       }
     }
   } catch (err) {
@@ -322,18 +1059,28 @@ async function fetchLeaderboard() {
     const list = await res.json();
     
     el.rankList.innerHTML = '';
-    if (list.length === 0) {
+    if (!list || list.length === 0) {
       el.rankList.innerHTML = `<p style="text-align: center; color: var(--dark-brown-light);">아직 숭배를 바친 신도가 없습니다.</p>`;
       return;
     }
 
     list.forEach((item, index) => {
       const row = document.createElement('div');
-      row.className = 'rank-item';
+      const isMe = state.isLoggedIn && state.user && state.user.username === item.username;
+      row.className = `rank-item ${isMe ? 'my-rank' : ''}`;
+
+      let rankDisplay = index + 1;
+      if (index === 0) rankDisplay = '🥇';
+      else if (index === 1) rankDisplay = '🥈';
+      else if (index === 2) rankDisplay = '🥉';
+
+      const titleBadge = getRankTitle(item.worship_count);
+
       row.innerHTML = `
         <div class="rank-left">
-          <div class="rank-num">${index + 1}</div>
-          <div class="rank-name">${item.username}</div>
+          <div class="rank-num">${rankDisplay}</div>
+          <div class="rank-name">${escapeHTML(item.username)} ${isMe ? '<span style="font-size:11px; color:#3E2723; background:#FFD23F; padding:2px 6px; border-radius:10px;">나</span>' : ''}</div>
+          <span style="font-size: 11px; opacity: 0.8; font-weight:600; color:var(--dark-brown-light);">${titleBadge}</span>
         </div>
         <div class="rank-count">${parseInt(item.worship_count).toLocaleString()} <span>번</span></div>
       `;
@@ -350,7 +1097,7 @@ async function fetchPosts() {
     const list = await res.json();
     
     el.boardFeed.innerHTML = '';
-    if (list.length === 0) {
+    if (!list || list.length === 0) {
       el.boardFeed.innerHTML = `<p style="text-align: center; padding: 40px 0; color: var(--dark-brown-light);">아직 작성된 방명록이 없습니다.</p>`;
       return;
     }
@@ -359,10 +1106,7 @@ async function fetchPosts() {
       const item = document.createElement('div');
       item.className = 'post-item';
       const formattedDate = new Date(post.created_at).toLocaleString('ko-KR', {
-        month: 'short',
-        day: 'numeric',
-        hour: '2-digit',
-        minute: '2-digit'
+        month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit'
       });
       
       let imageHtml = '';
@@ -373,14 +1117,27 @@ async function fetchPosts() {
           </div>
         `;
       }
+
+      const isMyPost = state.isLoggedIn && state.user && state.user.username === post.username;
+      const deleteBtnHtml = isMyPost ? `
+        <button class="post-delete-btn" onclick="handleDeletePost('${post.id}')" title="삭제"><i class="fa-solid fa-trash-can"></i> 삭제</button>
+      ` : '';
+
+      const reactions = post.reactions || 0;
       
       item.innerHTML = `
         <div class="post-header">
-          <div class="post-author">${post.username}</div>
-          <div class="post-date">${formattedDate}</div>
+          <div class="post-author">${escapeHTML(post.username)}</div>
+          <div style="display: flex; align-items: center; gap: 8px;">
+            <div class="post-date">${formattedDate}</div>
+            ${deleteBtnHtml}
+          </div>
         </div>
         <div class="post-content">${escapeHTML(post.content)}</div>
         ${imageHtml}
+        <div style="margin-top: 10px; display: flex; align-items: center; gap: 8px;">
+          <button class="post-react-btn" onclick="handleReactPost('${post.id}', this)"><i class="fa-solid fa-heart" style="color:#e53935;"></i> 숭배 공감 (<span class="react-count">${reactions}</span>)</button>
+        </div>
       `;
       el.boardFeed.appendChild(item);
     });
@@ -389,8 +1146,37 @@ async function fetchPosts() {
   }
 }
 
-// HTML 이스케이프 유틸리티
+window.handleReactPost = async function(postId, btnEl) {
+  try {
+    playChimeSound(1.2);
+    const res = await fetch(`/api/posts/${postId}/react`, { method: 'POST' });
+    const data = await res.json();
+    if (data.success) {
+      const countEl = btnEl.querySelector('.react-count');
+      if (countEl) countEl.innerText = data.reactions;
+    }
+  } catch (e) {}
+};
+
+window.handleDeletePost = async function(postId) {
+  if (!confirm('정말 이 방명록 글을 삭제하시겠습니까?')) return;
+  try {
+    const res = await fetch(`/api/posts/${postId}`, { method: 'DELETE' });
+    const data = await res.json();
+    if (res.ok && data.success) {
+      showToast('게시글이 삭제되었습니다.');
+      fetchPosts();
+    } else {
+      alert(data.error || '게시글 삭제 실패');
+    }
+  } catch (err) {
+    console.error(err);
+    alert('게시글 삭제 처리 중 오류가 발생했습니다.');
+  }
+};
+
 function escapeHTML(str) {
+  if (!str) return '';
   return str.replace(/[&<>'"]/g, 
     tag => ({
       '&': '&amp;',
@@ -402,23 +1188,44 @@ function escapeHTML(str) {
   );
 }
 
-// --- 숭배 버튼 클릭 액션 ---
+// 숭배 버튼 핸들러
 async function handleWorshipClick(e) {
-  // 신단 흔들림 애니메이션 효과 적용
+  unlockAchievement('first_worship');
+  playChimeSound();
+
   el.worshipButton.classList.remove('shake-animation');
-  void el.worshipButton.offsetWidth; // 리플로우 트리거
+  void el.worshipButton.offsetWidth;
   el.worshipButton.classList.add('shake-animation');
 
-  // 클릭 위치 근처에 숭배 Particle 띄우기
   createFloatingParticle(e);
 
-  // Optimistic UI update: Immediately increment counts on click for smooth feeling
-  state.globalWorshipCount += 1;
-  el.globalWorshipCount.innerText = state.globalWorshipCount.toLocaleString();
+  state.combo++;
+  clearTimeout(state.comboTimer);
+  const comboEl = document.getElementById('comboDisplay');
+  const comboCountEl = document.getElementById('comboCount');
+  if (comboEl && comboCountEl) {
+    comboCountEl.innerText = state.combo;
+    comboEl.style.display = 'block';
+  }
+
+  if (state.combo >= 10) {
+    unlockAchievement('combo_master');
+  }
+
+  state.comboTimer = setTimeout(() => {
+    state.combo = 0;
+    if (comboEl) comboEl.style.display = 'none';
+  }, 1500);
+
+  pendingGlobalClicks++;
+  el.globalWorshipCount.innerText = (state.globalWorshipCount + pendingGlobalClicks).toLocaleString();
+  updateShrineLevelProgress();
 
   if (state.isLoggedIn) {
-    state.userWorshipCount += 1;
-    el.userWorshipCount.innerText = state.userWorshipCount.toLocaleString();
+    pendingUserClicks++;
+    const displayUserCount = state.userWorshipCount + pendingUserClicks;
+    el.userWorshipCount.innerText = displayUserCount.toLocaleString();
+    updateUserRankBadge(displayUserCount);
   }
 
   try {
@@ -429,33 +1236,47 @@ async function handleWorshipClick(e) {
       const serverGlobalCount = parseInt(data.globalCount || 0);
       if (serverGlobalCount > state.globalWorshipCount) {
         state.globalWorshipCount = serverGlobalCount;
-        el.globalWorshipCount.innerText = serverGlobalCount.toLocaleString();
       }
       
-      if (state.isLoggedIn && data.userCount !== undefined && data.userCount !== null) {
-        const serverUserCount = parseInt(data.userCount || 0);
-        if (serverUserCount > state.userWorshipCount) {
-          state.userWorshipCount = serverUserCount;
-          el.userWorshipCount.innerText = serverUserCount.toLocaleString();
+      if (state.isLoggedIn) {
+        if (data.userCount !== undefined && data.userCount !== null) {
+          const serverUserCount = parseInt(data.userCount || 0);
+          if (serverUserCount > state.userWorshipCount) {
+            state.userWorshipCount = serverUserCount;
+          }
+        }
+        if (data.userCoins !== undefined && data.userCoins !== null) {
+          state.userCoins = parseInt(data.userCoins);
+          const coinEl = document.getElementById('headerUserCoins');
+          if (coinEl) coinEl.innerText = state.userCoins.toLocaleString();
         }
       }
     }
   } catch (err) {
     console.error('숭배 요청 전송 오류:', err);
+  } finally {
+    if (pendingGlobalClicks > 0) pendingGlobalClicks--;
+    if (pendingUserClicks > 0) pendingUserClicks--;
+
+    el.globalWorshipCount.innerText = (state.globalWorshipCount + pendingGlobalClicks).toLocaleString();
+    updateShrineLevelProgress();
+
+    if (state.isLoggedIn) {
+      const displayUserCount = state.userWorshipCount + pendingUserClicks;
+      el.userWorshipCount.innerText = displayUserCount.toLocaleString();
+      updateUserRankBadge(displayUserCount);
+    }
   }
 }
 
-// 클릭된 좌표에 둥둥 떠다니는 +1 입자 효과 생성
 function createFloatingParticle(e) {
   const rect = el.worshipButton.getBoundingClientRect();
   const particle = document.createElement('div');
   particle.className = 'worship-particle';
   
-  // 무작위 이펙트 텍스트 선택
-  const praiseTexts = ['+1', '🍮', '숭배', '아멘', 'Purin!', 'Pudding!'];
+  const praiseTexts = ['+1', '🍮', '숭배', '아멘', 'Purin!', 'Pudding!', '🔥COMBO'];
   particle.innerText = praiseTexts[Math.floor(Math.random() * praiseTexts.length)];
   
-  // 마우스 위치 기준으로 파티클 띄우기, 마우스 없으면 정중앙
   let x = rect.left + rect.width / 2;
   let y = rect.top + rect.height / 3;
   if (e && e.clientX && e.clientY) {
@@ -466,24 +1287,26 @@ function createFloatingParticle(e) {
   particle.style.left = `${x}px`;
   particle.style.top = `${y}px`;
   
-  // 날아갈 좌우 방향 무작위 지정
   const xDir = `${(Math.random() - 0.5) * 80}px`;
   particle.style.setProperty('--x-dir', xDir);
   
   document.body.appendChild(particle);
   
-  // 1초 뒤 요소 제거
   setTimeout(() => {
     particle.remove();
   }, 1000);
 }
 
-// --- 인증 폼 제출 핸들러 ---
-
+// 폼 핸들러
 async function handleRegister(e) {
   e.preventDefault();
-  const username = document.getElementById('registerUsername').value;
+  const username = document.getElementById('registerUsername').value.trim();
   const password = document.getElementById('registerPassword').value;
+
+  if (!username || !password) {
+    alert('사용자 이름과 비밀번호를 입력해주세요.');
+    return;
+  }
 
   try {
     const res = await fetch('/api/auth/register', {
@@ -494,10 +1317,17 @@ async function handleRegister(e) {
     
     const data = await res.json();
     if (res.ok && data.success) {
-      alert('성공적으로 가입되었습니다. 방금 생성한 계정으로 로그인해 주세요.');
+      showToast(data.message || '가입 완료!');
+      if (data.user) {
+        state.isLoggedIn = true;
+        state.user = data.user;
+        state.userWorshipCount = parseInt(data.user.worship_count) || 0;
+        updateAuthUI();
+      }
       closeModal('registerModal');
-      openModal('loginModal');
       el.registerForm.reset();
+      fetchStats();
+      fetchLeaderboard();
     } else {
       alert(data.error || '회원가입에 실패했습니다.');
     }
@@ -509,8 +1339,13 @@ async function handleRegister(e) {
 
 async function handleLogin(e) {
   e.preventDefault();
-  const username = document.getElementById('loginUsername').value;
+  const username = document.getElementById('loginUsername').value.trim();
   const password = document.getElementById('loginPassword').value;
+
+  if (!username || !password) {
+    alert('사용자 이름과 비밀번호를 입력해주세요.');
+    return;
+  }
 
   try {
     const res = await fetch('/api/auth/login', {
@@ -523,12 +1358,12 @@ async function handleLogin(e) {
     if (res.ok && data.success) {
       state.isLoggedIn = true;
       state.user = data.user;
-      state.userWorshipCount = data.user.worship_count;
+      state.userWorshipCount = parseInt(data.user.worship_count) || 0;
       updateAuthUI();
       closeModal('loginModal');
       el.loginForm.reset();
+      showToast(`${state.user.username}님 환영합니다!`);
       
-      // 로그인했으므로 리더보드 및 전반적인 계수 갱신
       fetchStats();
       fetchLeaderboard();
     } else {
@@ -548,18 +1383,17 @@ window.handleLogout = async function() {
     if (data.success) {
       state.isLoggedIn = false;
       state.user = null;
-      updateAuthUI();
-      // Reset user count immediately on logout
       state.userWorshipCount = 0;
-      el.userWorshipCount.innerText = '0';
+      updateAuthUI();
+      showToast('로그아웃 되었습니다.');
       fetchStats();
+      fetchLeaderboard();
     }
   } catch (err) {
     console.error('로그아웃 오류:', err);
   }
 };
 
-// 방명록 작성 제출 핸들러
 async function handleWritePost(e) {
   e.preventDefault();
   const contentEl = document.getElementById('postContent');
@@ -577,7 +1411,9 @@ async function handleWritePost(e) {
     if (res.ok && data.success) {
       contentEl.value = '';
       removePreview();
-      fetchPosts(); // 피드 목록 갱신
+      unlockAchievement('post_author');
+      showToast('방명록이 등재되었습니다.');
+      fetchPosts();
     } else {
       alert(data.error || '글 작성에 실패했습니다.');
     }
@@ -587,13 +1423,17 @@ async function handleWritePost(e) {
   }
 }
 
-// --- 모달 다이얼로그 제어 ---
-
+// 모달
 window.openModal = function(modalId) {
+  if (modalId === 'trophyModal') {
+    renderTrophyModal();
+  } else if (modalId === 'idCardModal') {
+    updateIdentityCardView();
+  }
   const modal = document.getElementById(modalId);
   if (modal) {
     modal.style.display = 'flex';
-    void modal.offsetWidth; // 강제 리플로우
+    void modal.offsetWidth;
     modal.classList.add('show');
   }
 };
@@ -602,32 +1442,25 @@ window.closeModal = function(modalId) {
   const modal = document.getElementById(modalId);
   if (modal) {
     modal.classList.remove('show');
-    setTimeout(() => {
-      modal.style.display = 'none';
-    }, 300);
+    setTimeout(() => { modal.style.display = 'none'; }, 300);
   }
 };
 
 window.switchModal = function(closeId, openId) {
   closeModal(closeId);
-  setTimeout(() => {
-    openModal(openId);
-  }, 300);
+  setTimeout(() => { openModal(openId); }, 300);
 };
 
-// 모달 외부 클릭 시 닫기
 window.addEventListener('click', (e) => {
   if (e.target.classList.contains('modal')) {
     closeModal(e.target.id);
   }
 });
 
-// --- 이미지 미리보기 및 Base64 변환 ---
 window.previewImage = function(event) {
   const file = event.target.files[0];
   if (!file) return;
 
-  // 크기 제한: 1.5MB
   if (file.size > 1.5 * 1024 * 1024) {
     alert("이미지 크기는 1.5MB 이하만 업로드 가능합니다.");
     event.target.value = "";
@@ -658,7 +1491,7 @@ window.removePreview = function() {
   }
 };
 
-// --- 오늘의 푸린 신탁 로직 ---
+// 신탁
 window.revealOracle = async function() {
   const card = document.getElementById("oracleCard");
   if (!card || card.classList.contains("flipped")) return;
@@ -672,6 +1505,7 @@ window.revealOracle = async function() {
     document.getElementById("oraclePudding").innerText = data.luckyPudding;
 
     card.classList.add("flipped");
+    playFanfareSound();
   } catch (err) {
     console.error("신탁 불러오기 실패:", err);
     alert("신탁을 불러오는 도중 오류가 발생했습니다.");
@@ -680,7 +1514,163 @@ window.revealOracle = async function() {
 
 window.resetOracleCard = function() {
   const card = document.getElementById("oracleCard");
-  if (card) {
-    card.classList.remove("flipped");
-  }
+  if (card) card.classList.remove("flipped");
 };
+
+window.copyOracleText = function() {
+  const quote = document.getElementById("oracleText").innerText;
+  const pudding = document.getElementById("oraclePudding").innerText;
+  const score = document.getElementById("oracleScore").innerText;
+  const text = `[오늘의 퐁퐁푸린 신탁]\n신성 점수: ${score}점\n계시: ${quote}\n행운의 푸딩: ${pudding}`;
+
+  navigator.clipboard.writeText(text).then(() => {
+    showToast("오늘의 신탁 내용이 복사되었습니다!");
+  }).catch(() => {
+    alert("복사에 실패했습니다.");
+  });
+};
+
+// --- 럭키 룰렛 로직 ---
+let isSpinning = false;
+let currentRotation = 0;
+
+window.spinRoulette = function() {
+  if (isSpinning) return;
+  isSpinning = true;
+  playChimeSound(1.4);
+
+  const wheel = document.getElementById('rouletteWheel');
+  const resultText = document.getElementById('rouletteResultText');
+  if (resultText) resultText.innerText = '성스러운 룰렛이 회전하고 있습니다...';
+
+  const sectors = [
+    '🍮 +50 숭배 보너스 획득!',
+    '🌟 황금 푸딩의 은총!',
+    '⚡ 2배 콤보 에너지 발산!',
+    '🍩 달콤한 럭키 축복!',
+    '📜 지혜 점수 84점 상승!',
+    '✨ 성스러운 푸딩 광채!',
+    '👑 대사제님의 성스러운 과지!',
+    '💖 따뜻한 이웃 사랑의 온기!'
+  ];
+
+  const randomSector = Math.floor(Math.random() * 8);
+  const degreesPerSector = 45;
+  const targetDegree = 360 * 5 + (360 - (randomSector * degreesPerSector + 22.5));
+
+  currentRotation += targetDegree;
+  if (wheel) wheel.style.transform = `rotate(${currentRotation}deg)`;
+
+  setTimeout(() => {
+    isSpinning = false;
+    const reward = sectors[randomSector];
+    if (resultText) resultText.innerText = `🎉 축하합니다! ${reward}`;
+    playFanfareSound();
+    showToast(reward);
+
+    if (randomSector === 0) {
+      state.globalWorshipCount += 50;
+      el.globalWorshipCount.innerText = state.globalWorshipCount.toLocaleString();
+    }
+  }, 4000);
+};
+
+// --- 푸딩 피아노 & 사운드보드 로직 ---
+window.playPianoNote = function(freq, noteName) {
+  if (!soundEnabled) soundEnabled = true;
+  try {
+    initAudioContext();
+    const osc = audioCtx.createOscillator();
+    const gain = audioCtx.createGain();
+
+    osc.type = 'triangle';
+    osc.frequency.setValueAtTime(freq, audioCtx.currentTime);
+
+    gain.gain.setValueAtTime(0.3, audioCtx.currentTime);
+    gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.5);
+
+    osc.connect(gain);
+    gain.connect(audioCtx.destination);
+
+    osc.start();
+    osc.stop(audioCtx.currentTime + 0.5);
+
+    showToast(`🎵 건반 [${noteName}] 연주!`);
+  } catch (e) {}
+};
+
+window.playSongPreset = function(type) {
+  initAudioContext();
+  let notes = [];
+
+  if (type === 'hymn') {
+    // C4, D4, E4, G4, G4, A4, G4
+    notes = [
+      { f: 261.63, d: 300 }, { f: 293.66, d: 300 }, { f: 329.63, d: 300 },
+      { f: 392.00, d: 500 }, { f: 392.00, d: 300 }, { f: 440.00, d: 300 }, { f: 392.00, d: 600 }
+    ];
+  } else {
+    // E4, E4, F4, G4, G4, F4, E4, D4
+    notes = [
+      { f: 329.63, d: 300 }, { f: 329.63, d: 300 }, { f: 349.23, d: 300 }, { f: 392.00, d: 300 },
+      { f: 392.00, d: 300 }, { f: 349.23, d: 300 }, { f: 329.63, d: 300 }, { f: 293.66, d: 500 }
+    ];
+  }
+
+  showToast(`🎼 ${type === 'hymn' ? '퐁퐁 찬가' : '푸딩의 송가'} 연주 중...`);
+
+  let delay = 0;
+  notes.forEach(n => {
+    setTimeout(() => {
+      try {
+        const osc = audioCtx.createOscillator();
+        const gain = audioCtx.createGain();
+        osc.type = 'triangle';
+        osc.frequency.setValueAtTime(n.f, audioCtx.currentTime);
+
+        gain.gain.setValueAtTime(0.25, audioCtx.currentTime);
+        gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + (n.d / 1000));
+
+        osc.connect(gain);
+        gain.connect(audioCtx.destination);
+
+        osc.start();
+        osc.stop(audioCtx.currentTime + (n.d / 1000));
+      } catch (e) {}
+    }, delay);
+    delay += n.d;
+  });
+};
+
+// --- 신도증 카드 정보 복사 ---
+window.copyIdentityCardInfo = function() {
+  const username = state.isLoggedIn && state.user ? state.user.username : '익명의 숭배자';
+  const count = state.isLoggedIn ? state.userWorshipCount : 0;
+  const title = getRankTitle(count);
+  const today = new Date().toLocaleDateString('ko-KR');
+
+  const text = `[공식 퐁퐁푸린 숭배 신도증]\n신도 성명: ${username}\n성스러운 칭호: ${title}\n누적 숭배수: ${count}회\n발급 일자: ${today}\n"들판의 푸딩도 흔들리나니..."`;
+
+  navigator.clipboard.writeText(text).then(() => {
+    showToast('📜 신도증 정보가 복사되었습니다!');
+  }).catch(() => {
+    alert('복사 실패');
+  });
+};
+
+function updateIdentityCardView() {
+  const nameEl = document.getElementById('idCardUsername');
+  const titleEl = document.getElementById('idCardTitle');
+  const countEl = document.getElementById('idCardCount');
+  const dateEl = document.getElementById('idCardDate');
+
+  const username = state.isLoggedIn && state.user ? state.user.username : '익명의 숭배자';
+  const count = state.isLoggedIn ? state.userWorshipCount : 0;
+  const title = getRankTitle(count);
+  const today = new Date().toLocaleDateString('ko-KR');
+
+  if (nameEl) nameEl.innerText = username;
+  if (titleEl) titleEl.innerText = title;
+  if (countEl) countEl.innerText = `${count.toLocaleString()} 회`;
+  if (dateEl) dateEl.innerText = today;
+}

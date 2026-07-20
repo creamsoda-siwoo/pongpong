@@ -6,9 +6,29 @@
   --cream-white: #FFFBEB;
   --gold: #D4AF37;
   --text-dark: #3E2723;
+  --bg-gradient: radial-gradient(circle at top, #FFFDEB, #FFF9D1, #FFF2B2);
   --glass-bg: rgba(255, 253, 240, 0.75);
   --glass-border: rgba(92, 58, 33, 0.15);
   --glass-shadow: 0 8px 32px 0 rgba(92, 58, 33, 0.08);
+  --card-bg: #FFFDF4;
+  --header-bg: rgba(255, 251, 235, 0.85);
+}
+
+/* 🌙 다크 숭배 모드 테마 변수 */
+body.dark-mode {
+  --primary-yellow: #FFC107;
+  --primary-yellow-glow: rgba(255, 193, 7, 0.5);
+  --dark-brown: #FFE082;
+  --dark-brown-light: #FFD54F;
+  --cream-white: #1E1E24;
+  --gold: #FFD700;
+  --text-dark: #FFF8E1;
+  --bg-gradient: radial-gradient(circle at top, #1A1829, #12101F, #0A0914);
+  --glass-bg: rgba(25, 23, 38, 0.82);
+  --glass-border: rgba(255, 210, 63, 0.25);
+  --glass-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.5);
+  --card-bg: #1B1928;
+  --header-bg: rgba(18, 16, 31, 0.9);
 }
 
 * {
@@ -20,11 +40,12 @@
 }
 
 body {
-  background: radial-gradient(circle at top, #FFFDEB, #FFF9D1, #FFF2B2);
+  background: var(--bg-gradient);
   color: var(--text-dark);
   min-height: 100vh;
   overflow-x: hidden;
   position: relative;
+  transition: background 0.5s ease, color 0.5s ease;
 }
 
 /* 성스러운 배경 파티클 */
@@ -47,12 +68,8 @@ body {
 }
 
 @keyframes floatUp {
-  0% {
-    transform: translateY(100vh) rotate(0deg) scale(0.5);
-  }
-  100% {
-    transform: translateY(-10vh) rotate(360deg) scale(1.5);
-  }
+  0% { transform: translateY(100vh) rotate(0deg) scale(0.5); }
+  100% { transform: translateY(-10vh) rotate(360deg) scale(1.5); }
 }
 
 /* 헤더 스타일 */
@@ -60,19 +77,20 @@ header {
   position: sticky;
   top: 0;
   z-index: 100;
-  background: rgba(255, 251, 235, 0.85);
+  background: var(--header-bg);
   backdrop-filter: blur(10px);
   border-bottom: 2px solid var(--glass-border);
-  box-shadow: 0 2px 10px rgba(92, 58, 33, 0.05);
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+  transition: background 0.5s ease;
 }
 
 .header-container {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  max-width: 1200px;
+  max-width: 1280px;
   margin: 0 auto;
-  padding: 15px 20px;
+  padding: 12px 20px;
 }
 
 .logo {
@@ -99,29 +117,59 @@ header {
 
 nav {
   display: flex;
-  gap: 20px;
+  gap: 12px;
 }
 
 nav a {
   text-decoration: none;
   color: var(--dark-brown);
   font-weight: 600;
-  padding: 8px 16px;
+  padding: 8px 14px;
   border-radius: 20px;
   transition: all 0.3s;
-  font-size: 15px;
+  font-size: 14px;
 }
 
 nav a:hover {
   background-color: var(--primary-yellow);
-  color: var(--dark-brown);
+  color: #3E2723;
   box-shadow: 0 4px 12px var(--primary-yellow-glow);
 }
 
 .auth-section {
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: 8px;
+}
+
+.icon-tool-btn {
+  background: rgba(92, 58, 33, 0.08);
+  border: 1px solid var(--glass-border);
+  border-radius: 50%;
+  width: 38px;
+  height: 38px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--dark-brown);
+  cursor: pointer;
+  font-size: 15px;
+  transition: all 0.3s;
+}
+
+.icon-tool-btn:hover {
+  background: var(--primary-yellow);
+  color: #3E2723;
+  transform: scale(1.1);
+}
+
+.icon-tool-btn.muted {
+  color: #888;
+  opacity: 0.5;
+}
+
+.trophy-btn {
+  color: var(--gold);
 }
 
 /* 버튼 공통 스타일 */
@@ -142,18 +190,18 @@ nav a:hover {
 .btn-primary {
   background: var(--dark-brown);
   color: var(--cream-white);
-  box-shadow: 0 4px 10px rgba(92, 58, 33, 0.2);
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
 }
 
 .btn-primary:hover {
   background: var(--dark-brown-light);
-  box-shadow: 0 6px 15px rgba(92, 58, 33, 0.3);
+  box-shadow: 0 6px 15px rgba(0, 0, 0, 0.3);
   transform: translateY(-2px);
 }
 
 .btn-secondary {
   background: var(--primary-yellow);
-  color: var(--dark-brown);
+  color: #3E2723;
   box-shadow: 0 4px 10px var(--primary-yellow-glow);
 }
 
@@ -173,35 +221,31 @@ nav a:hover {
 .user-badge {
   display: flex;
   align-items: center;
-  gap: 10px;
-  background: rgba(92, 58, 33, 0.06);
-  padding: 6px 16px;
+  gap: 8px;
+  background: rgba(92, 58, 33, 0.08);
+  padding: 6px 14px;
   border-radius: 20px;
-  font-size: 14px;
+  font-size: 13px;
   font-weight: 600;
-  color: var(--dark-brown);
-}
-
-.user-badge strong {
   color: var(--dark-brown);
 }
 
 .btn-logout {
   background: transparent;
-  color: #d32f2f;
-  border: 1px solid rgba(211, 47, 47, 0.2);
+  color: #e53935;
+  border: 1px solid rgba(229, 57, 53, 0.3);
   padding: 6px 12px;
   font-size: 12px;
 }
 
 .btn-logout:hover {
-  background: rgba(211, 47, 47, 0.05);
-  border-color: #d32f2f;
+  background: rgba(229, 57, 53, 0.1);
+  border-color: #e53935;
 }
 
 /* 메인 구조 */
 main {
-  max-width: 1200px;
+  max-width: 1280px;
   margin: 0 auto;
   padding: 40px 20px;
   position: relative;
@@ -242,7 +286,7 @@ main {
   margin-top: 10px;
 }
 
-/* 1. 영웅 숭배 섹션 */
+/* 1. 영웅 숭배 섹션 & 레벨바 */
 .hero-section {
   min-height: calc(100vh - 120px);
   display: flex;
@@ -256,11 +300,56 @@ main {
   width: 100%;
 }
 
+.shrine-level-bar-container {
+  max-width: 500px;
+  margin: 0 auto 25px;
+  background: var(--glass-bg);
+  border: 1px solid var(--glass-border);
+  border-radius: 20px;
+  padding: 14px 20px;
+  box-shadow: var(--glass-shadow);
+}
+
+.shrine-level-info {
+  display: flex;
+  justify-content: space-between;
+  font-size: 12px;
+  font-weight: 700;
+  margin-bottom: 8px;
+}
+
+.shrine-level-badge {
+  color: var(--dark-brown);
+  background: var(--primary-yellow);
+  padding: 2px 10px;
+  border-radius: 10px;
+  box-shadow: 0 2px 6px var(--primary-yellow-glow);
+}
+
+.shrine-xp-text {
+  color: var(--dark-brown-light);
+}
+
+.shrine-progress-track {
+  width: 100%;
+  height: 8px;
+  background: rgba(0, 0, 0, 0.1);
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+.shrine-progress-fill {
+  height: 100%;
+  background: linear-gradient(90deg, #FFD23F, #FF9800);
+  border-radius: 4px;
+  transition: width 0.3s ease;
+}
+
 .glow-text {
   font-size: 52px;
   font-weight: 800;
   color: var(--dark-brown);
-  text-shadow: 0 0 15px rgba(255, 210, 63, 0.5);
+  text-shadow: 0 0 15px var(--primary-yellow-glow);
   margin-bottom: 10px;
 }
 
@@ -276,7 +365,7 @@ main {
   position: relative;
   width: 320px;
   height: 320px;
-  margin: 0 auto 50px;
+  margin: 0 auto 40px;
   display: flex;
   justify-content: center;
   align-items: center;
@@ -293,14 +382,8 @@ main {
 }
 
 @keyframes pulseGlow {
-  0% {
-    transform: scale(0.9);
-    opacity: 0.7;
-  }
-  100% {
-    transform: scale(1.1);
-    opacity: 1;
-  }
+  0% { transform: scale(0.9); opacity: 0.7; }
+  100% { transform: scale(1.1); opacity: 1; }
 }
 
 .purin-shrine {
@@ -313,18 +396,14 @@ main {
 .worship-target {
   width: 250px;
   height: auto;
-  filter: drop-shadow(0 15px 30px rgba(92, 58, 33, 0.25));
+  filter: drop-shadow(0 15px 30px rgba(0, 0, 0, 0.25));
   animation: floatSlightly 3s infinite ease-in-out;
   transition: transform 0.1s;
 }
 
 @keyframes floatSlightly {
-  0%, 100% {
-    transform: translateY(0);
-  }
-  50% {
-    transform: translateY(-12px);
-  }
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-12px); }
 }
 
 .halo {
@@ -345,23 +424,26 @@ main {
   100% { transform: translate(-50%, -50%) rotate(360deg); }
 }
 
-/* 숭배 클릭 시 모션 */
-.purin-shrine:hover {
-  transform: scale(1.05);
+.combo-display {
+  position: absolute;
+  top: -30px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: linear-gradient(135deg, #FF9800, #E65100);
+  color: #FFF;
+  font-weight: 800;
+  font-size: 16px;
+  padding: 4px 14px;
+  border-radius: 20px;
+  box-shadow: 0 4px 12px rgba(230, 81, 0, 0.5);
+  animation: bounceCombo 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+  white-space: nowrap;
 }
 
-.purin-shrine:active {
-  transform: scale(0.92);
-}
-
-.purin-shrine.shake-animation {
-  animation: shakeAltar 0.2s ease-in-out;
-}
-
-@keyframes shakeAltar {
-  0%, 100% { transform: scale(0.95) rotate(0deg); }
-  25% { transform: scale(0.95) rotate(-3deg); }
-  75% { transform: scale(0.95) rotate(3deg); }
+@keyframes bounceCombo {
+  0% { transform: translateX(-50%) scale(0.5); }
+  50% { transform: translateX(-50%) scale(1.3); }
+  100% { transform: translateX(-50%) scale(1); }
 }
 
 .click-hint {
@@ -370,12 +452,6 @@ main {
   margin-top: 15px;
   opacity: 0.8;
   letter-spacing: 1px;
-  animation: pulseText 1.5s infinite alternate;
-}
-
-@keyframes pulseText {
-  0% { opacity: 0.5; }
-  100% { opacity: 1; }
 }
 
 /* 대시보드 */
@@ -425,12 +501,12 @@ main {
 
 .login-prompt-text {
   font-size: 12px;
-  color: #d32f2f;
+  color: #e53935;
   margin-top: 8px;
   font-weight: 600;
 }
 
-/* 파티클 효과 (클릭 시 숫자가 날아가는 효과) */
+/* 파티클 효과 */
 .worship-particle {
   position: absolute;
   color: var(--dark-brown);
@@ -443,26 +519,577 @@ main {
 }
 
 @keyframes particleFly {
-  0% {
-    transform: translate(-50%, -50%) translateY(0) scale(1);
-    opacity: 1;
-  }
-  100% {
-    transform: translate(-50%, -50%) translateY(-120px) translateX(var(--x-dir)) scale(1.4);
-    opacity: 0;
-  }
+  0% { transform: translate(-50%, -50%) translateY(0) scale(1); opacity: 1; }
+  100% { transform: translate(-50%, -50%) translateY(-120px) translateX(var(--x-dir)) scale(1.4); opacity: 0; }
+}
+
+/* 미니게임 탭 셀렉터 */
+.game-tabs-container {
+  display: flex;
+  justify-content: center;
+  gap: 12px;
+  max-width: 650px;
+  margin: 0 auto 20px;
+}
+
+.game-tab-btn {
+  background: var(--glass-bg);
+  border: 1px solid var(--glass-border);
+  padding: 10px 18px;
+  border-radius: 20px;
+  font-weight: 700;
+  font-size: 14px;
+  color: var(--dark-brown-light);
+  cursor: pointer;
+  transition: all 0.3s;
+}
+
+.game-tab-btn:hover {
+  background: var(--primary-yellow);
+  color: #3E2723;
+  transform: translateY(-2px);
+}
+
+.game-tab-btn.active {
+  background: var(--dark-brown);
+  color: var(--cream-white);
+  border-color: var(--dark-brown);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+}
+
+/* 미니게임 2: 메모리 카드 짝맞추기 */
+.memory-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 12px;
+  margin-top: 15px;
+}
+
+.memory-card {
+  height: 90px;
+  background: linear-gradient(135deg, var(--dark-brown), #3E2723);
+  border: 2px solid var(--gold);
+  border-radius: 14px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 32px;
+  cursor: pointer;
+  color: var(--gold);
+  transition: transform 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+  user-select: none;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.15);
+}
+
+.memory-card.flipped {
+  background: var(--card-bg);
+  border-color: var(--primary-yellow);
+  transform: rotateY(180deg);
+}
+
+.memory-card.matched {
+  background: rgba(76, 175, 80, 0.15);
+  border-color: #4CAF50;
+  cursor: default;
+  opacity: 0.8;
+}
+
+/* 미니게임 3: 퐁퐁푸틴 퇴치 (Whack-a-Mole) */
+.smash-grid-container {
+  position: relative;
+  width: 100%;
+}
+
+.smash-overlay {
+  position: absolute;
+  top: 0; left: 0; width: 100%; height: 100%;
+  background: var(--glass-bg);
+  backdrop-filter: blur(8px);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  z-index: 10;
+  text-align: center;
+  padding: 20px;
+  border-radius: 18px;
+}
+
+.smash-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 15px;
+  padding: 10px;
+}
+
+.smash-hole {
+  height: 95px;
+  background: radial-gradient(circle, #3E2723, #1A0F0D);
+  border: 3px solid var(--dark-brown-light);
+  border-radius: 20px;
+  position: relative;
+  overflow: hidden;
+  box-shadow: inset 0 8px 15px rgba(0,0,0,0.6);
+  cursor: pointer;
+}
+
+.smash-target {
+  position: absolute;
+  bottom: -90px;
+  left: 50%;
+  transform: translateX(-50%);
+  font-size: 42px;
+  transition: bottom 0.15s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+  user-select: none;
+}
+
+/* 룰렛 섹션 */
+.roulette-section { padding: 60px 0; }
+
+.roulette-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  max-width: 450px;
+  margin: 0 auto;
+}
+
+.roulette-wheel-wrapper {
+  position: relative;
+  width: 280px;
+  height: 280px;
+}
+
+.roulette-pointer {
+  position: absolute;
+  top: -15px;
+  left: 50%;
+  transform: translateX(-50%);
+  font-size: 24px;
+  color: #e53935;
+  z-index: 10;
+  text-shadow: 0 2px 5px rgba(0,0,0,0.5);
+}
+
+.roulette-wheel {
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  border: 6px solid var(--dark-brown);
+  position: relative;
+  overflow: hidden;
+  box-shadow: var(--glass-shadow);
+  transition: transform 4s cubic-bezier(0.15, 0.9, 0.2, 1);
+  background: conic-gradient(
+    #FFD23F 0deg 45deg,
+    #FFB74D 45deg 90deg,
+    #FFF176 90deg 135deg,
+    #FF8A65 135deg 180deg,
+    #AED581 180deg 225deg,
+    #4FC3F7 225deg 270deg,
+    #BA68C8 270deg 315deg,
+    #FF80AB 315deg 360deg
+  );
+}
+
+.wheel-sector {
+  position: absolute;
+  width: 50%;
+  height: 50%;
+  top: 0;
+  right: 0;
+  transform-origin: 0% 100%;
+  transform: rotate(calc(var(--i) * 45deg));
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.wheel-sector span {
+  position: absolute;
+  left: 20px;
+  top: 35px;
+  transform: rotate(22deg);
+  font-size: 11px;
+  font-weight: 800;
+  color: #3E2723;
+  white-space: nowrap;
+}
+
+.roulette-result-text {
+  margin-top: 15px;
+  font-size: 16px;
+  font-weight: 800;
+  color: var(--dark-brown);
+  min-height: 24px;
+}
+
+/* 푸딩 피아노 섹션 */
+.piano-section { padding: 60px 0; }
+
+.piano-container {
+  max-width: 700px;
+  margin: 0 auto;
+  text-align: center;
+}
+
+.piano-keys-grid {
+  display: grid;
+  grid-template-columns: repeat(8, 1fr);
+  gap: 8px;
+  margin-bottom: 20px;
+}
+
+.piano-key {
+  height: 140px;
+  background: var(--card-bg);
+  border: 2px solid var(--glass-border);
+  border-radius: 0 0 16px 16px;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  align-items: center;
+  padding-bottom: 15px;
+  cursor: pointer;
+  box-shadow: var(--glass-shadow);
+  transition: all 0.15s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+.piano-key:hover {
+  background: var(--primary-yellow);
+  transform: translateY(-4px);
+}
+
+.piano-key:active, .piano-key.active {
+  transform: translateY(6px);
+  background: #FFE082;
+  box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+}
+
+.piano-key span {
+  font-size: 15px;
+  font-weight: 800;
+  color: var(--dark-brown);
+}
+
+.piano-key small {
+  font-size: 10px;
+  color: var(--dark-brown-light);
+  margin-top: 4px;
+}
+
+.piano-actions {
+  display: flex;
+  justify-content: center;
+  gap: 15px;
+}
+
+/* 신도증 카드 스타일 */
+.identity-card {
+  background: linear-gradient(135deg, #FFFDF4, #FFF9D1);
+  border: 4px double var(--dark-brown);
+  border-radius: 20px;
+  padding: 24px;
+  position: relative;
+  box-shadow: 0 10px 30px rgba(0,0,0,0.15);
+  margin-top: 10px;
+}
+
+.id-card-header {
+  display: flex;
+  align-items: center;
+  gap: 15px;
+  border-bottom: 2px solid var(--glass-border);
+  padding-bottom: 12px;
+  margin-bottom: 16px;
+}
+
+.id-seal {
+  width: 50px;
+  height: 50px;
+  border-radius: 50%;
+  border: 2px solid var(--primary-yellow);
+}
+
+.id-card-header h3 {
+  font-size: 18px;
+  font-weight: 800;
+  color: var(--dark-brown);
+}
+
+.id-card-header p {
+  font-size: 10px;
+  letter-spacing: 1px;
+  color: var(--dark-brown-light);
+  font-weight: bold;
+}
+
+.id-card-body {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  font-size: 14px;
+}
+
+.id-row span {
+  color: var(--dark-brown-light);
+  font-size: 12px;
+}
+
+.id-row strong {
+  color: var(--dark-brown);
+}
+
+.id-card-footer {
+  margin-top: 18px;
+  padding-top: 12px;
+  border-top: 1px dashed var(--glass-border);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-family: 'Gowun Batang', serif;
+  font-size: 12px;
+  color: var(--dark-brown-light);
+}
+
+.stamp-seal {
+  border: 2px solid #e53935;
+  color: #e53935;
+  font-weight: 800;
+  font-size: 11px;
+  padding: 2px 8px;
+  border-radius: 4px;
+  transform: rotate(-12deg);
+}
+
+.minigame-container {
+  max-width: 650px;
+  margin: 0 auto;
+}
+
+.minigame-card {
+  background: var(--glass-bg);
+  border: 2px solid var(--glass-border);
+  border-radius: 24px;
+  padding: 25px;
+  box-shadow: var(--glass-shadow);
+}
+
+.minigame-stats {
+  display: flex;
+  justify-content: space-around;
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--dark-brown);
+  margin-bottom: 15px;
+  background: var(--card-bg);
+  padding: 10px 15px;
+  border-radius: 16px;
+  border: 1px solid var(--glass-border);
+}
+
+.minigame-canvas-area {
+  position: relative;
+  width: 100%;
+  height: 320px;
+  background: radial-gradient(circle at top, rgba(255,210,63,0.15), rgba(0,0,0,0.05));
+  border-radius: 18px;
+  border: 2px dashed var(--glass-border);
+  overflow: hidden;
+}
+
+.game-overlay {
+  position: absolute;
+  top: 0; left: 0; width: 100%; height: 100%;
+  background: var(--glass-bg);
+  backdrop-filter: blur(8px);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  z-index: 10;
+  text-align: center;
+  padding: 20px;
+}
+
+.game-start-icon {
+  font-size: 52px;
+  color: var(--primary-yellow);
+}
+
+.basket {
+  position: absolute;
+  bottom: 10px;
+  left: 50%;
+  transform: translateX(-50%);
+  font-size: 40px;
+  transition: left 0.05s ease-out;
+  pointer-events: none;
+}
+
+.falling-pudding {
+  position: absolute;
+  font-size: 28px;
+  pointer-events: none;
+  animation: dropPudding 2s linear forwards;
+}
+
+.minigame-controls {
+  display: flex;
+  gap: 15px;
+  margin-top: 15px;
+}
+
+.minigame-controls .btn {
+  flex: 1;
+  padding: 14px;
+  font-size: 16px;
+}
+
+/* 퐁퐁 타로 카드 섹션 */
+.tarot-section {
+  padding: 60px 0;
+}
+
+.tarot-container {
+  max-width: 800px;
+  margin: 0 auto;
+  text-align: center;
+}
+
+.tarot-hint {
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--dark-brown-light);
+  margin-bottom: 25px;
+}
+
+.tarot-cards-grid {
+  display: grid;
+  grid-template-columns: repeat(6, 1fr);
+  gap: 12px;
+  margin-bottom: 30px;
+}
+
+.tarot-card-item {
+  height: 160px;
+  background: linear-gradient(135deg, var(--dark-brown), #3E2723);
+  border: 2px solid var(--gold);
+  border-radius: 12px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--gold);
+  font-size: 24px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+  transition: all 0.3s;
+}
+
+.tarot-card-item:hover {
+  transform: translateY(-8px) scale(1.05);
+  box-shadow: 0 8px 20px var(--primary-yellow-glow);
+}
+
+.tarot-card-item.selected {
+  border-color: var(--primary-yellow);
+  box-shadow: 0 0 15px var(--primary-yellow);
+  transform: scale(0.95);
+  opacity: 0.5;
+  pointer-events: none;
+}
+
+.tarot-reading-result {
+  background: var(--glass-bg);
+  border: 2px solid var(--glass-border);
+  border-radius: 24px;
+  padding: 30px;
+  box-shadow: var(--glass-shadow);
+  animation: fadeIn 0.5s ease-out;
+}
+
+.tarot-result-cards {
+  display: flex;
+  justify-content: space-around;
+  gap: 15px;
+  margin: 20px 0;
+  flex-wrap: wrap;
+}
+
+.tarot-result-card {
+  flex: 1;
+  min-width: 200px;
+  background: var(--card-bg);
+  border: 2px solid var(--glass-border);
+  border-radius: 16px;
+  padding: 16px;
+  text-align: center;
+}
+
+.tarot-result-card h4 {
+  color: var(--dark-brown);
+  font-size: 15px;
+  margin-bottom: 6px;
+}
+
+.tarot-result-card .card-icon {
+  font-size: 36px;
+  margin: 10px 0;
+}
+
+.tarot-advice {
+  font-family: 'Gowun Batang', serif;
+  font-size: 16px;
+  line-height: 1.8;
+  color: var(--dark-brown);
 }
 
 /* 2. 퐁퐁복음 뷰어 섹션 */
 .scripture-section {
-  padding: 80px 0;
+  padding: 60px 0;
+}
+
+.scripture-toolbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  max-width: 1200px;
+  margin: 0 auto 20px;
+  gap: 15px;
+  flex-wrap: wrap;
+}
+
+.search-box {
+  position: relative;
+  flex: 1;
+  min-width: 280px;
+}
+
+.search-icon {
+  position: absolute;
+  left: 14px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: var(--dark-brown-light);
+}
+
+.search-box input {
+  width: 100%;
+  padding: 10px 14px 10px 40px;
+  border-radius: 20px;
+  border: 1px solid var(--glass-border);
+  background: var(--glass-bg);
+  color: var(--text-dark);
+  outline: none;
+  font-size: 14px;
 }
 
 .scripture-container {
   display: grid;
   grid-template-columns: 240px 1fr;
   gap: 30px;
-  margin-top: 20px;
 }
 
 .chapter-nav {
@@ -471,16 +1098,6 @@ main {
   gap: 10px;
   max-height: 480px;
   overflow-y: auto;
-  padding-right: 10px;
-}
-
-.chapter-nav::-webkit-scrollbar {
-  width: 6px;
-}
-
-.chapter-nav::-webkit-scrollbar-thumb {
-  background: var(--glass-border);
-  border-radius: 3px;
 }
 
 .chapter-btn {
@@ -500,9 +1117,8 @@ main {
 
 .chapter-btn:hover {
   background: var(--primary-yellow);
-  color: var(--dark-brown);
+  color: #3E2723;
   transform: translateX(5px);
-  box-shadow: 0 4px 10px var(--primary-yellow-glow);
 }
 
 .chapter-btn.active {
@@ -513,30 +1129,12 @@ main {
 
 /* 복음서 본문 디자인 */
 .scripture-book {
-  background: #fdfaf2;
-  border: 8px double var(--dark-brown);
+  background: var(--card-bg);
+  border: 6px double var(--dark-brown);
   border-radius: 16px;
-  box-shadow: 0 10px 30px rgba(92, 58, 33, 0.15);
+  box-shadow: var(--glass-shadow);
   padding: 40px;
   min-height: 450px;
-  position: relative;
-}
-
-.scripture-book::before {
-  content: '';
-  position: absolute;
-  top: 10px;
-  left: 10px;
-  right: 10px;
-  bottom: 10px;
-  border: 1px solid rgba(92, 58, 33, 0.2);
-  pointer-events: none;
-}
-
-.book-page {
-  display: flex;
-  flex-direction: column;
-  height: 100%;
 }
 
 .page-header {
@@ -556,8 +1154,6 @@ main {
   line-height: 2.2;
   font-size: 17px;
   color: var(--text-dark);
-  white-space: pre-line;
-  flex-grow: 1;
   text-align: justify;
 }
 
@@ -574,24 +1170,9 @@ main {
   color: var(--gold);
 }
 
-.page-footer {
-  margin-top: 30px;
-  border-top: 1px dashed rgba(92, 58, 33, 0.2);
-  padding-top: 15px;
-  text-align: center;
-}
-
-.amen-text {
-  font-family: 'Gowun Batang', serif;
-  font-weight: 700;
-  font-size: 18px;
-  color: var(--dark-brown-light);
-  letter-spacing: 2px;
-}
-
 /* 3. 숭배 게시판 */
 .board-section {
-  padding: 80px 0;
+  padding: 60px 0;
 }
 
 .board-container {
@@ -602,7 +1183,6 @@ main {
 
 .board-write-card {
   background: var(--glass-bg);
-  backdrop-filter: blur(15px);
   border: 2px solid var(--glass-border);
   box-shadow: var(--glass-shadow);
   border-radius: 24px;
@@ -612,63 +1192,8 @@ main {
   top: 100px;
 }
 
-.board-write-card h3 {
-  font-size: 18px;
-  font-weight: 800;
-  color: var(--dark-brown);
-  margin-bottom: 20px;
-}
-
-.login-notice {
-  font-size: 14px;
-  color: var(--dark-brown-light);
-  text-align: center;
-  padding: 20px 0;
-}
-
-.login-notice a {
-  color: var(--dark-brown);
-  font-weight: bold;
-}
-
-.form-group {
-  margin-bottom: 20px;
-}
-
-.form-group label {
-  display: block;
-  font-size: 13px;
-  font-weight: 700;
-  color: var(--dark-brown-light);
-  margin-bottom: 8px;
-}
-
-.form-control {
-  width: 100%;
-  padding: 12px 15px;
-  border-radius: 12px;
-  border: 1px solid var(--glass-border);
-  background: rgba(255, 255, 255, 0.7);
-  font-size: 14px;
-  color: var(--text-dark);
-  outline: none;
-  transition: all 0.3s;
-}
-
-.form-control:focus {
-  border-color: var(--dark-brown);
-  background: #ffffff;
-  box-shadow: 0 0 8px rgba(92, 58, 33, 0.1);
-}
-
-textarea.form-control {
-  resize: none;
-  min-height: 100px;
-}
-
 .board-feed {
   background: var(--glass-bg);
-  backdrop-filter: blur(15px);
   border: 2px solid var(--glass-border);
   box-shadow: var(--glass-shadow);
   border-radius: 24px;
@@ -677,29 +1202,9 @@ textarea.form-control {
   overflow-y: auto;
 }
 
-.board-feed::-webkit-scrollbar {
-  width: 6px;
-}
-
-.board-feed::-webkit-scrollbar-thumb {
-  background: var(--glass-border);
-  border-radius: 3px;
-}
-
-/* 방명록 포스트 아이템 */
 .post-item {
   border-bottom: 1px solid var(--glass-border);
   padding: 20px 0;
-  animation: fadeIn 0.5s ease-out;
-}
-
-.post-item:last-child {
-  border-bottom: none;
-}
-
-@keyframes fadeIn {
-  from { opacity: 0; transform: translateY(10px); }
-  to { opacity: 1; transform: translateY(0); }
 }
 
 .post-header {
@@ -711,42 +1216,31 @@ textarea.form-control {
 .post-author {
   font-weight: 700;
   color: var(--dark-brown);
-  font-size: 15px;
-  display: flex;
-  align-items: center;
-  gap: 6px;
 }
 
-.post-author::before {
-  content: '🍮';
-}
+.post-author::before { content: '🍮 '; }
 
-.post-date {
+.post-react-btn {
+  background: none;
+  border: 1px solid var(--glass-border);
+  border-radius: 12px;
+  padding: 3px 8px;
   font-size: 12px;
   color: var(--dark-brown-light);
-  opacity: 0.7;
+  cursor: pointer;
+  transition: all 0.2s;
 }
 
-.post-content {
-  font-size: 14px;
-  line-height: 1.6;
-  color: var(--text-dark);
-  white-space: pre-wrap;
+.post-react-btn:hover {
+  background: var(--primary-yellow);
+  color: #3E2723;
 }
 
-/* 4. 리더보드 */
-.leaderboard-section {
-  padding: 80px 0;
-}
-
-.leaderboard-container {
-  max-width: 700px;
-  margin: 0 auto;
-}
-
+/* 4. 명예의 전당 */
+.leaderboard-section { padding: 60px 0; }
+.leaderboard-container { max-width: 700px; margin: 0 auto; }
 .rank-list {
   background: var(--glass-bg);
-  backdrop-filter: blur(15px);
   border: 2px solid var(--glass-border);
   box-shadow: var(--glass-shadow);
   border-radius: 24px;
@@ -763,395 +1257,311 @@ textarea.form-control {
   transition: all 0.3s;
 }
 
-.rank-item:last-child {
-  border-bottom: none;
+.rank-item.my-rank {
+  background: rgba(255, 210, 63, 0.25);
+  border: 1px solid var(--primary-yellow);
 }
 
-.rank-item:hover {
-  background: rgba(255, 210, 63, 0.1);
-  transform: scale(1.02);
-}
+.rank-left { display: flex; align-items: center; gap: 14px; }
+.rank-num { font-size: 18px; font-weight: 800; width: 30px; height: 30px; display: flex; align-items: center; justify-content: center; border-radius: 50%; }
 
-.rank-left {
-  display: flex;
-  align-items: center;
-  gap: 16px;
-}
-
-.rank-num {
-  font-size: 18px;
-  font-weight: 800;
-  color: var(--dark-brown-light);
-  width: 30px;
-  height: 30px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  border-radius: 50%;
-}
-
-.rank-item:nth-child(1) .rank-num { background: #FFD700; color: #5C3A21; box-shadow: 0 2px 8px rgba(255, 215, 0, 0.5); }
-.rank-item:nth-child(2) .rank-num { background: #C0C0C0; color: #5C3A21; box-shadow: 0 2px 8px rgba(192, 192, 192, 0.5); }
-.rank-item:nth-child(3) .rank-num { background: #CD7F32; color: #ffffff; box-shadow: 0 2px 8px rgba(205, 127, 50, 0.5); }
-
-.rank-name {
-  font-weight: 700;
-  color: var(--dark-brown);
-}
-
-.rank-count {
-  font-weight: 800;
-  color: var(--dark-brown);
-  font-size: 16px;
-}
-
-.rank-count span {
-  font-size: 12px;
-  font-weight: 400;
-  color: var(--dark-brown-light);
-  margin-left: 4px;
-}
-
-/* 로딩 스피너 */
-.loading-spinner {
-  text-align: center;
-  padding: 40px 0;
-  color: var(--dark-brown-light);
-  font-weight: 600;
-}
-
-/* 모달 스타일 */
+/* 모달 */
 .modal {
-  display: none;
-  position: fixed;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  background: rgba(92, 58, 33, 0.4);
-  backdrop-filter: blur(8px);
-  z-index: 1000;
-  justify-content: center;
-  align-items: center;
-  opacity: 0;
-  transition: opacity 0.3s ease-out;
+  display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+  background: rgba(0, 0, 0, 0.5); backdrop-filter: blur(8px);
+  z-index: 1000; justify-content: center; align-items: center;
+  opacity: 0; transition: opacity 0.3s ease-out;
 }
 
-.modal.show {
-  display: flex;
-  opacity: 1;
-}
+.modal.show { display: flex; opacity: 1; }
 
 .modal-content {
-  background: #FFFDF4;
+  background: var(--card-bg);
   border: 4px solid var(--dark-brown);
   border-radius: 24px;
   padding: 40px;
   width: 90%;
   max-width: 450px;
   position: relative;
-  box-shadow: 0 20px 50px rgba(92, 58, 33, 0.3);
-  transform: translateY(-30px);
-  transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.3);
 }
 
-.modal.show .modal-content {
-  transform: translateY(0);
+.modal-content.modal-lg { max-width: 750px; }
+
+.close-btn { position: absolute; top: 15px; right: 20px; font-size: 28px; font-weight: bold; cursor: pointer; color: var(--dark-brown-light); }
+
+/* 업적 훈장 카드 */
+.trophy-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: 15px;
+  max-height: 450px;
+  overflow-y: auto;
+  padding: 5px;
 }
 
-.close-btn {
-  position: absolute;
-  top: 15px;
-  right: 20px;
-  font-size: 28px;
-  font-weight: bold;
-  color: var(--dark-brown-light);
-  cursor: pointer;
-  transition: color 0.3s;
-}
-
-.close-btn:hover {
-  color: #d32f2f;
-}
-
-.modal h2 {
-  font-size: 24px;
-  font-weight: 800;
-  color: var(--dark-brown);
+.trophy-card {
+  background: var(--glass-bg);
+  border: 2px solid var(--glass-border);
+  border-radius: 16px;
+  padding: 16px;
   text-align: center;
-  margin-bottom: 30px;
-  position: relative;
+  transition: all 0.3s;
+  opacity: 0.5;
+  filter: grayscale(80%);
 }
 
-.modal h2::after {
-  content: '';
-  display: block;
-  width: 50px;
-  height: 3px;
-  background: var(--primary-yellow);
-  margin: 8px auto 0;
-  border-radius: 2px;
+.trophy-card.unlocked {
+  opacity: 1;
+  filter: none;
+  border-color: var(--primary-yellow);
+  box-shadow: 0 4px 12px var(--primary-yellow-glow);
 }
 
-.modal-footer-link {
+.trophy-icon { font-size: 36px; margin-bottom: 8px; }
+.trophy-title { font-weight: 800; font-size: 15px; color: var(--dark-brown); margin-bottom: 4px; }
+.trophy-desc { font-size: 12px; color: var(--dark-brown-light); }
+
+/* 토스트 알림 */
+.toast-notification {
+  position: fixed; bottom: 30px; left: 50%;
+  transform: translateX(-50%) translateY(50px);
+  background: var(--dark-brown); color: var(--cream-white);
+  padding: 12px 24px; border-radius: 30px; font-size: 14px; font-weight: 600;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.3); z-index: 9999;
+  opacity: 0; transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+.toast-notification.show { transform: translateX(-50%) translateY(0); opacity: 1; }
+
+/* 상점 아이템 그리드 */
+.shop-items-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: 15px;
+  margin-top: 15px;
+}
+
+.shop-item-card {
+  background: var(--glass-bg);
+  border: 2px solid var(--glass-border);
+  border-radius: 18px;
+  padding: 20px;
   text-align: center;
-  font-size: 13px;
-  margin-top: 20px;
-  color: var(--dark-brown-light);
+  transition: all 0.3s;
 }
 
-.modal-footer-link a {
-  color: var(--dark-brown);
-  font-weight: 700;
+.shop-item-card:hover {
+  transform: translateY(-5px);
+  border-color: var(--primary-yellow);
+  box-shadow: 0 8px 20px var(--primary-yellow-glow);
 }
 
-/* 푸터 */
-footer {
-  background: var(--dark-brown);
-  color: var(--cream-white);
-  padding: 40px 20px;
-  text-align: center;
-  border-top: 4px solid var(--primary-yellow);
-}
-
-.footer-container {
-  max-width: 1200px;
-  margin: 0 auto;
-}
-
-.footer-container p:first-child {
-  font-weight: 600;
+.shop-item-preview {
+  font-size: 48px;
   margin-bottom: 10px;
 }
 
-.footer-container p:last-child {
-  font-size: 13px;
-  opacity: 0.6;
-}
-
-/* 방명록 첨부 이미지 스타일 */
-.post-image-container {
-  margin-top: 12px;
-  overflow: hidden;
-  border-radius: 12px;
-  border: 1px solid var(--glass-border);
-  max-width: 100%;
-  width: fit-content;
-}
-
-.post-image {
-  display: block;
-  max-width: 100%;
-  max-height: 250px;
-  object-fit: cover;
-  transition: transform 0.3s;
-}
-
-.post-image:hover {
-  transform: scale(1.02);
-}
-
-.image-preview-container {
-  margin-top: 10px;
-  position: relative;
-  display: inline-block;
-}
-
-.image-preview {
-  max-width: 100px;
-  max-height: 100px;
-  border-radius: 8px;
-  border: 1px solid var(--glass-border);
-}
-
-.image-preview-remove {
-  position: absolute;
-  top: -5px;
-  right: -5px;
-  background: #d32f2f;
-  color: #fff;
-  border-radius: 50%;
-  width: 20px;
-  height: 20px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 10px;
-  cursor: pointer;
-  border: none;
-}
-
-/* 오늘의 푸린 신탁 스타일 */
-.oracle-section {
-  padding: 80px 0;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-}
-
-.oracle-container {
-  width: 100%;
-  max-width: 400px;
-  margin: 0 auto;
-  perspective: 1000px;
-}
-
-.oracle-card {
-  width: 100%;
-  height: 350px;
-  cursor: pointer;
-}
-
-.oracle-card-inner {
-  position: relative;
-  width: 100%;
-  height: 100%;
-  text-align: center;
-  transition: transform 0.8s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-  transform-style: preserve-3d;
-}
-
-.oracle-card.flipped .oracle-card-inner {
-  transform: rotateY(180deg);
-}
-
-.oracle-front, .oracle-back {
-  position: absolute;
-  width: 100%;
-  height: 100%;
-  -webkit-backface-visibility: hidden;
-  backface-visibility: hidden;
-  border-radius: 24px;
-  border: 2px solid var(--glass-border);
-  box-shadow: var(--glass-shadow);
-  padding: 30px;
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-  align-items: center;
-  gap: 15px;
-}
-
-.oracle-front {
-  background: var(--glass-bg);
-}
-
-.oracle-icon {
-  font-size: 64px;
-  color: var(--primary-yellow);
-  text-shadow: 0 4px 10px var(--primary-yellow-glow);
-  animation: pulseIcon 2s infinite alternate;
-}
-
-@keyframes pulseIcon {
-  0% { transform: scale(1); }
-  100% { transform: scale(1.1); }
-}
-
-.oracle-front h3 {
-  font-size: 20px;
-  color: var(--dark-brown);
-  font-weight: 800;
-}
-
-.oracle-front p {
-  font-size: 14px;
-  color: var(--dark-brown-light);
-}
-
-.oracle-back {
-  background: #FFFDF4;
-  border-color: var(--dark-brown);
-  transform: rotateY(180deg);
-}
-
-.purity-badge {
-  background: var(--primary-yellow);
-  color: var(--dark-brown);
-  font-weight: 800;
-  padding: 6px 16px;
-  border-radius: 16px;
-  font-size: 14px;
-  box-shadow: 0 2px 8px var(--primary-yellow-glow);
-}
-
-.oracle-quote {
-  font-family: 'Gowun Batang', serif;
+.shop-item-card h4 {
   font-size: 16px;
-  line-height: 1.8;
-  color: var(--text-dark);
+  color: var(--dark-brown);
+  margin-bottom: 6px;
+}
+
+.shop-item-card p {
+  font-size: 12px;
+  color: var(--dark-brown-light);
+  min-height: 36px;
+  line-height: 1.4;
+}
+
+.shop-price {
+  font-size: 15px;
+  font-weight: 800;
+  color: var(--gold);
+  margin: 10px 0;
+}
+
+/* 가챠 럭키박스 */
+.gacha-box-area {
+  background: var(--glass-bg);
+  border: 2px solid var(--glass-border);
+  border-radius: 20px;
+  padding: 40px;
+  margin-top: 15px;
+}
+
+.gacha-box-icon {
+  font-size: 72px;
+  margin-bottom: 15px;
+  animation: bounceGacha 2s infinite ease-in-out;
+}
+
+@keyframes bounceGacha {
+  0%, 100% { transform: translateY(0) rotate(0deg); }
+  50% { transform: translateY(-15px) rotate(8deg); }
+}
+
+.gacha-result-area {
+  background: var(--card-bg);
+  border: 3px solid var(--gold);
+  border-radius: 20px;
+  padding: 25px;
+  margin-top: 20px;
+  animation: fadeIn 0.5s ease-out;
+}
+
+/* 인벤토리 목록 */
+.inventory-list-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+  gap: 12px;
+  margin-top: 15px;
+}
+
+.inventory-item {
+  background: var(--glass-bg);
+  border: 1px solid var(--glass-border);
+  border-radius: 14px;
+  padding: 12px;
+  text-align: center;
+  font-size: 14px;
+  font-weight: bold;
+  color: var(--dark-brown);
+}
+
+/* 스킨 장착 시 제단 커스텀 테마 */
+body.skin-gold .aurora-glow {
+  background: radial-gradient(circle, rgba(255, 215, 0, 0.8) 0%, rgba(255, 160, 0, 0.3) 50%, transparent 70%);
+  animation: goldPulse 2s infinite alternate;
+}
+
+body.skin-sakura .aurora-glow {
+  background: radial-gradient(circle, rgba(255, 182, 193, 0.9) 0%, rgba(244, 143, 177, 0.4) 50%, transparent 70%);
+}
+
+/* 액자 갤러리 섹션 */
+.frame-gallery-section { padding: 60px 0; }
+
+.frame-container {
+  display: grid;
+  grid-template-columns: 350px 1fr;
+  gap: 25px;
+  max-width: 1100px;
+  margin: 0 auto;
+}
+
+.frame-upload-card {
+  background: var(--glass-bg);
+  border: 2px solid var(--glass-border);
+  border-radius: 20px;
+  padding: 24px;
+  height: fit-content;
+  box-shadow: var(--glass-shadow);
+}
+
+.frame-style-selector {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+  margin-top: 6px;
+}
+
+.style-option {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  background: var(--card-bg);
+  padding: 8px 10px;
+  border-radius: 12px;
+  font-size: 12px;
   font-weight: 700;
-  margin: 15px 0;
+  cursor: pointer;
+  border: 1px solid var(--glass-border);
+}
+
+.style-option input[type="radio"] {
+  accent-color: var(--dark-brown);
+}
+
+.frame-preview-area {
+  margin-top: 15px;
   text-align: center;
 }
 
-.lucky-item {
+.framed-photo-box {
+  position: relative;
+  border-radius: 16px;
+  padding: 14px;
+  background: #FFF8E1;
+  box-shadow: 0 10px 25px rgba(0,0,0,0.2);
+  transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+.framed-photo-box:hover {
+  transform: translateY(-6px) scale(1.02);
+}
+
+.framed-photo-box img {
+  width: 100%;
+  height: 200px;
+  object-fit: cover;
+  border-radius: 8px;
+  display: block;
+}
+
+.frame-title-tag {
+  margin-top: 10px;
+  font-weight: 800;
   font-size: 14px;
-  color: var(--dark-brown-light);
-}
-
-.lucky-item strong {
   color: var(--dark-brown);
-  font-weight: bold;
+  text-align: center;
 }
 
-/* 모바일 반응형 */
-@media (max-width: 768px) {
-  .header-container {
-    flex-direction: column;
-    gap: 15px;
-  }
-  
-  nav {
-    flex-wrap: wrap;
-    justify-content: center;
-    gap: 10px;
-  }
+/* 4가지 액자 스타일 */
+/* 1. 황금 커스터드 액자 */
+.framed-photo-box.frame-gold {
+  border: 8px double var(--gold);
+  background: linear-gradient(135deg, #FFFDE7, #FFF59D);
+  box-shadow: 0 0 20px rgba(255, 215, 0, 0.4);
+}
 
-  .glow-text {
-    font-size: 36px;
-  }
+/* 2. 성스러운 목재 액자 */
+.framed-photo-box.frame-wood {
+  border: 10px solid #5D4037;
+  background: #EFEBE9;
+  box-shadow: inset 0 0 10px rgba(0,0,0,0.5), 0 8px 20px rgba(0,0,0,0.3);
+}
 
-  .altar-container {
-    width: 260px;
-    height: 260px;
-  }
+/* 3. 핑크 푸딩 액자 */
+.framed-photo-box.frame-pink {
+  border: 8px solid #F8BBD0;
+  background: #FCE4EC;
+  box-shadow: 0 8px 20px rgba(248, 187, 208, 0.5);
+}
 
-  .worship-target {
-    width: 180px;
-  }
+/* 4. 다이아몬드 크리스탈 액자 */
+.framed-photo-box.frame-diamond {
+  border: 8px solid #B2EBF2;
+  background: linear-gradient(135deg, #E0F7FA, #E1F5FE);
+  box-shadow: 0 0 25px rgba(178, 235, 242, 0.8);
+}
 
-  .aurora-glow {
-    width: 300px;
-    height: 300px;
-  }
+.frame-wall-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  gap: 20px;
+}
 
-  .halo {
-    width: 220px;
-    height: 220px;
-  }
+.frame-item-card {
+  position: relative;
+}
 
-  .scripture-container {
-    grid-template-columns: 1fr;
-  }
-
-  .chapter-nav {
-    flex-direction: row;
-    overflow-x: auto;
-    max-height: none;
-    padding-bottom: 10px;
-    white-space: nowrap;
-  }
-
-  .chapter-btn {
-    padding: 10px 16px;
-  }
-
-  .board-container {
-    grid-template-columns: 1fr;
-  }
-
-  .board-write-card {
-    position: static;
-  }
+.frame-meta {
+  margin-top: 8px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 12px;
+  color: var(--dark-brown-light);
 }
