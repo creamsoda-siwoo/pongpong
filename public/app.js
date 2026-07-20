@@ -595,10 +595,43 @@ window.startPuddingGame = function() {
   spawnInterval = setInterval(spawnFallingPudding, 600);
 };
 
+window.moveBasket = function(direction) {
+  if (!gameActive) return;
+  basketX = Math.max(8, Math.min(92, basketX + direction * 10));
+  updateBasketPos();
+};
+
 function updateBasketPos() {
   const b = document.getElementById('basket');
   if (b) b.style.left = `${basketX}%`;
 }
+
+// 키보드 및 모바일 터치 드래그 컨트롤 바인딩
+document.addEventListener('keydown', (e) => {
+  if (!gameActive) return;
+  if (e.key === 'ArrowLeft' || e.key === 'a' || e.key === 'A') {
+    moveBasket(-1);
+  } else if (e.key === 'ArrowRight' || e.key === 'd' || e.key === 'D') {
+    moveBasket(1);
+  }
+});
+
+// 모바일 스마트폰 터치/드래그 이동 이벤트
+document.addEventListener('DOMContentLoaded', () => {
+  const area = document.getElementById('gameCanvasArea');
+  if (area) {
+    const handleTouch = (e) => {
+      if (!gameActive || !e.touches || e.touches.length === 0) return;
+      const rect = area.getBoundingClientRect();
+      const touchX = e.touches[0].clientX - rect.left;
+      const percentX = (touchX / rect.width) * 100;
+      basketX = Math.max(8, Math.min(92, percentX));
+      updateBasketPos();
+    };
+    area.addEventListener('touchstart', handleTouch, { passive: true });
+    area.addEventListener('touchmove', handleTouch, { passive: true });
+  }
+});
 
 function spawnFallingPudding() {
   if (!gameActive) return;

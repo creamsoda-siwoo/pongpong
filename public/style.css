@@ -1565,3 +1565,106 @@ body.skin-sakura .aurora-glow {
   font-size: 12px;
   color: var(--dark-brown-light);
 }
+
+/* 📱 모바일 스마트폰 최적화 미디어 쿼리 (Mobile Optimization) */
+@media (max-width: 768px) {
+  /* 헤더 & 네비게이션 모바일 터치 최적화 */
+  .header-container {
+    flex-direction: column;
+    gap: 10px;
+    padding: 10px 15px;
+  }
+
+  nav {
+    display: flex;
+    overflow-x: auto;
+    width: 100%;
+    padding-bottom: 5px;
+    -webkit-overflow-scrolling: touch;
+    gap: 8px;
+  }
+
+  nav a {
+    white-space: nowrap;
+    padding: 6px 12px;
+    font-size: 13px;
+    border-radius: 14px;
+    background: var(--glass-bg);
+  }
+
+  .auth-section {
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 6px;
+    width: 100%;
+  }
+
+  /* 메인 타이틀 및 제단 레벨 */
+  .glow-text {
+    font-size: 32px;
+  }
+
+  .purin-shrine {
+    width: 180px;
+    height: 180px;
+  }
+
+  /* 푸딩 캐치 미니게임 모바일 콘트롤 */
+  .minigame-controls {
+    display: flex;
+    justify-content: space-between;
+    gap: 15px;
+    margin-top: 15px;
+  }
+
+  .btn-game-ctrl {
+    flex: 1;
+    height: 52px;
+    font-size: 18px;
+    font-weight: 800;
+    border-radius: 16px;
+    touch-action: manipulation;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+  }
+
+  .btn-game-ctrl:active {
+    transform: scale(0.95);
+    background: var(--primary-yellow);
+  }
+
+  /* 짝맞추기 메모리 카드는 4열 유지하며 높이 자동 */
+  .memory-grid {
+    grid-template-columns: repeat(4, 1fr);
+    gap: 6px;
+  }
+
+  .memory-card {
+    height: 65px;
+    font-size: 24px;
+    border-radius: 10px;
+  }
+
+  /* 푸틴 퇴치전 3x3 모바일 격자 */
+  .smash-hole {
+    height: 75px;
+  }
+
+  .smash-target {
+    font-size: 32px;
+  }
+
+  /* 액자 갤러리 모바일 1열 배치 */
+  .frame-container {
+    grid-template-columns: 1fr;
+  }
+
+  .frame-wall-grid {
+    grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+    gap: 12px;
+  }
+
+  /* 모바일 터치 피드백 강화 */
+  button, .btn, .piano-key, .memory-card, .smash-hole {
+    touch-action: manipulation;
+  }
+}

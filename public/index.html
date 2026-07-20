@@ -3,7 +3,7 @@
 
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
   <title>퐁퐁푸린 숭배 성지 - Pompompurin Sanctuary</title>
   <!-- Google Fonts: Outfit & Gowun Batang -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -141,8 +141,8 @@
             <div class="basket" id="basket">🥣</div>
           </div>
           <div class="minigame-controls">
-            <button class="btn btn-secondary" id="btnMoveLeft"><i class="fa-solid fa-arrow-left"></i> 왼쪽</button>
-            <button class="btn btn-secondary" id="btnMoveRight">오른쪽 <i class="fa-solid fa-arrow-right"></i></button>
+            <button class="btn btn-secondary btn-game-ctrl" id="btnMoveLeft" onclick="moveBasket(-1)" ontouchstart="event.preventDefault(); moveBasket(-1)"><i class="fa-solid fa-arrow-left"></i> 왼쪽</button>
+            <button class="btn btn-secondary btn-game-ctrl" id="btnMoveRight" onclick="moveBasket(1)" ontouchstart="event.preventDefault(); moveBasket(1)">오른쪽 <i class="fa-solid fa-arrow-right"></i></button>
           </div>
         </div>
 
