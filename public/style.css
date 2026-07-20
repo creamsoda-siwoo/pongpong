@@ -1711,8 +1711,142 @@ body.skin-sakura .aurora-glow {
     gap: 12px;
   }
 
-  /* 모바일 터치 피드백 강화 */
-  button, .btn, .piano-key, .memory-card, .smash-hole {
-    touch-action: manipulation;
-  }
+/* FEVER 모드 바너 */
+.fever-banner {
+  background: linear-gradient(90deg, #FF1744, #FF9100, #FFEA00, #00E676, #00E5FF, #D500F9);
+  background-size: 300% 300%;
+  animation: rainbowGradient 1.5s infinite linear;
+  color: #FFF;
+  font-weight: 900;
+  font-size: 16px;
+  padding: 6px 16px;
+  border-radius: 20px;
+  margin-bottom: 12px;
+  box-shadow: 0 0 15px rgba(255, 215, 0, 0.8);
+  text-shadow: 0 2px 4px rgba(0,0,0,0.4);
+}
+
+@keyframes rainbowGradient {
+  0% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
+}
+
+/* 성전 펫 친구들 */
+.shrine-pets-bar {
+  display: flex;
+  justify-content: center;
+  gap: 10px;
+  margin-top: 10px;
+}
+
+.shrine-pet {
+  background: var(--card-bg);
+  border: 1px solid var(--glass-border);
+  padding: 4px 10px;
+  border-radius: 14px;
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: transform 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+  user-select: none;
+}
+
+.shrine-pet:hover, .shrine-pet:active {
+  transform: scale(1.2) rotate(6deg);
+  background: var(--primary-yellow);
+}
+
+/* 슬롯머신 */
+.slot-machine-container {
+  padding: 20px 0;
+}
+
+.slot-reels {
+  display: flex;
+  justify-content: center;
+  gap: 15px;
+  margin-top: 15px;
+}
+
+.slot-reel {
+  width: 80px;
+  height: 95px;
+  background: linear-gradient(135deg, var(--dark-brown), #1A0F0D);
+  border: 3px solid var(--gold);
+  border-radius: 18px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 42px;
+  box-shadow: inset 0 5px 12px rgba(0,0,0,0.6);
+  user-select: none;
+}
+
+.slot-result-text {
+  margin-top: 15px;
+  font-weight: 800;
+  font-size: 15px;
+  color: var(--dark-brown);
+  min-height: 24px;
+}
+
+/* AI 챗봇 피드 */
+.ai-chat-feed {
+  height: 250px;
+  overflow-y: auto;
+  background: var(--glass-bg);
+  border: 1px solid var(--glass-border);
+  border-radius: 16px;
+  padding: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.ai-chat-msg {
+  font-size: 13px;
+  padding: 8px 12px;
+  border-radius: 14px;
+  max-width: 85%;
+  line-height: 1.4;
+}
+
+.ai-chat-msg.purin {
+  background: #FFF9C4;
+  color: #3E2723;
+  align-self: flex-start;
+  border: 1px solid var(--primary-yellow);
+}
+
+.ai-chat-msg.user {
+  background: var(--dark-brown);
+  color: var(--cream-white);
+  align-self: flex-end;
+}
+
+/* 퀴즈 챌린지 */
+.quiz-options-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-top: 15px;
+}
+
+.quiz-option-btn {
+  background: var(--card-bg);
+  border: 2px solid var(--glass-border);
+  padding: 12px 16px;
+  border-radius: 14px;
+  font-weight: 700;
+  font-size: 14px;
+  color: var(--dark-brown);
+  cursor: pointer;
+  text-align: left;
+  transition: all 0.2s;
+}
+
+.quiz-option-btn:hover {
+  background: var(--primary-yellow);
+  border-color: var(--dark-brown);
 }

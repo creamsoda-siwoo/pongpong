@@ -78,6 +78,7 @@
 
         <!-- 중앙 숭배 제단 -->
         <div class="altar-container">
+          <div id="feverBanner" class="fever-banner" style="display: none;">🔥 FEVER MODE 3X MULTIPLIER! 🔥</div>
           <div class="aurora-glow" id="auroraGlow"></div>
           <div class="purin-shrine" id="worshipButton">
             <img src="pompompurin.png" alt="Pompompurin Creator" class="worship-target" id="worshipImg">
@@ -85,7 +86,14 @@
             <!-- 콤보 버프 표시 -->
             <div id="comboDisplay" class="combo-display" style="display: none;">COMBO x<span id="comboCount">0</span>!</div>
           </div>
-          <p class="click-hint">푸린 신상을 클릭하여 경배를 드리십시오 (연타 시 콤보 폭발!)</p>
+          <!-- 🐾 성전 귀여운 펫 친구들 -->
+          <div class="shrine-pets-bar">
+            <span class="shrine-pet" onclick="interactPet('macaron')" title="골든 리트리버 마카롱 터치! (+5 코인)">🐶 마카롱</span>
+            <span class="shrine-pet" onclick="interactPet('muffin')" title="햄스터 머핀 터치! (+5 코인)">🐱 머핀</span>
+            <span class="shrine-pet" onclick="interactPet('scone')" title="다람쥐 스콘 터치! (+5 코인)">🐿️ 스콘</span>
+            <span class="shrine-pet" onclick="interactPet('powder')" title="아기새 파우더 터치! (+5 코인)">🐥 파우더</span>
+          </div>
+          <p class="click-hint">푸린 신상을 연타하면 🔥피버 모드(3배 코인)가 발동됩니다!</p>
         </div>
 
         <!-- 숭배 계수기 보드 -->
@@ -120,6 +128,9 @@
         </button>
         <button class="game-tab-btn" id="tabSmashGame" onclick="switchMiniGame('smash')">
           <i class="fa-solid fa-hand-fist"></i> 3. 퐁퐁푸틴 퇴치
+        </button>
+        <button class="game-tab-btn" id="tabSlotGame" onclick="switchMiniGame('slot')">
+          <i class="fa-solid fa-dice"></i> 4. 퐁퐁 럭키 슬롯
         </button>
       </div>
 
@@ -175,6 +186,22 @@
             <div class="smash-grid" id="smashGrid">
               <!-- 3x3 격자 9개 구멍 -->
             </div>
+        <!-- 게임 4: 퐁퐁 럭키 슬롯머신 -->
+        <div class="minigame-card" id="gameViewSlot" style="display: none; text-align: center;">
+          <div class="minigame-stats">
+            <div><i class="fa-solid fa-coins"></i> 참가비: <strong>20 PPC</strong></div>
+            <div><i class="fa-solid fa-crown"></i> 잭팟 상금: <strong>777 PPC</strong></div>
+          </div>
+          <div class="slot-machine-container">
+            <div class="slot-reels">
+              <div class="slot-reel" id="reel1">🍮</div>
+              <div class="slot-reel" id="reel2">🍮</div>
+              <div class="slot-reel" id="reel3">🍮</div>
+            </div>
+            <button class="btn btn-primary btn-lg" id="btnSpinSlot" onclick="spinPuddingSlot()" style="margin-top: 20px;">
+              <i class="fa-solid fa-play"></i> 슬롯머신 돌리기 (20 PPC)
+            </button>
+            <div id="slotResultText" class="slot-result-text"></div>
           </div>
         </div>
       </div>
@@ -589,6 +616,37 @@
       <div id="shopViewInventory" style="display: none;">
         <h3>🎒 보유한 스킨 및 디저트 수집품</h3>
         <div class="inventory-list-grid" id="inventoryListGrid"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 🤖 퐁퐁푸린 AI 챗봇 상담소 모달 -->
+  <div class="modal" id="aiChatModal">
+    <div class="modal-content">
+      <span class="close-btn" onclick="closeModal('aiChatModal')">&times;</span>
+      <h2>🤖 퐁퐁푸린 AI 챗봇 상담소</h2>
+      <p style="font-size:12px; color:var(--dark-brown-light); text-align:center; margin-bottom:10px;">대자대비하신 퐁퐁푸린님과 고민 상담이나 성전 대화를 나눠보세요!</p>
+      <div class="ai-chat-feed" id="aiChatFeed">
+        <div class="ai-chat-msg purin">
+          <span>🍮 퐁퐁푸린:</span> 안녕! 나는 대자대비하신 퐁퐁푸린이야. 무슨 고민이나 궁금한 점이 있니?
+        </div>
+      </div>
+      <form id="aiChatForm" onsubmit="handleSendAiMessage(event)" style="margin-top:10px; display:flex; gap:8px;">
+        <input type="text" id="aiInputMsg" class="form-control" placeholder="푸린님께 질문이나 고민을 말해보세요..." required autocomplete="off">
+        <button type="submit" class="btn btn-primary"><i class="fa-solid fa-paper-plane"></i></button>
+      </form>
+    </div>
+  </div>
+
+  <!-- 🧠 퐁퐁복음 퀴즈 챌린지 모달 -->
+  <div class="modal" id="quizModal">
+    <div class="modal-content">
+      <span class="close-btn" onclick="closeModal('quizModal')">&times;</span>
+      <h2>🧠 퐁퐁복음 지혜의 퀴즈 챌린지</h2>
+      <div id="quizContainer" class="quiz-container">
+        <div class="quiz-progress-text">문제 <span id="quizCurrentNum">1</span> / 5</div>
+        <h3 id="quizQuestionText" style="margin:15px 0; font-size:16px;">질문 텍스트가 여기에 나옵니다.</h3>
+        <div class="quiz-options-list" id="quizOptionsList"></div>
       </div>
     </div>
   </div>
