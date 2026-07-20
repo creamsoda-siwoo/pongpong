@@ -1569,27 +1569,69 @@ body.skin-sakura .aurora-glow {
 /* 📱 모바일 스마트폰 최적화 미디어 쿼리 (Mobile Optimization) */
 @media (max-width: 768px) {
   /* 헤더 & 네비게이션 모바일 터치 최적화 */
-  .header-container {
-    flex-direction: column;
-    gap: 10px;
-    padding: 10px 15px;
+  header {
+    padding: 6px 0;
   }
 
+  .header-container {
+    flex-direction: column;
+    gap: 8px;
+    padding: 6px 12px;
+  }
+
+  .logo {
+    font-size: 18px;
+  }
+
+  .mini-purin {
+    height: 34px;
+  }
+
+  /* 모바일 네비게이션 상단 스크롤바 칩 메뉴 */
   nav {
     display: flex;
     overflow-x: auto;
     width: 100%;
-    padding-bottom: 5px;
+    padding: 6px 4px;
     -webkit-overflow-scrolling: touch;
     gap: 8px;
+    scrollbar-width: none; /* Firefox */
+  }
+
+  nav::-webkit-scrollbar {
+    display: none; /* Chrome/Safari */
   }
 
   nav a {
     white-space: nowrap;
-    padding: 6px 12px;
-    font-size: 13px;
-    border-radius: 14px;
-    background: var(--glass-bg);
+    padding: 8px 14px;
+    font-size: 14px;
+    font-weight: 700;
+    border-radius: 18px;
+    background: var(--card-bg);
+    border: 1.5px solid var(--glass-border);
+    color: var(--dark-brown);
+    box-shadow: 0 3px 8px rgba(0, 0, 0, 0.08);
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    transition: all 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+  }
+
+  nav a i {
+    font-size: 15px;
+    color: var(--gold);
+  }
+
+  nav a:active, nav a:hover {
+    background: var(--dark-brown);
+    color: var(--cream-white);
+    border-color: var(--dark-brown);
+    transform: scale(0.96);
+  }
+
+  nav a:active i, nav a:hover i {
+    color: var(--primary-yellow);
   }
 
   .auth-section {
@@ -1597,6 +1639,12 @@ body.skin-sakura .aurora-glow {
     justify-content: center;
     gap: 6px;
     width: 100%;
+    padding-top: 2px;
+  }
+
+  .coin-badge {
+    font-size: 12px;
+    padding: 4px 10px;
   }
 
   /* 메인 타이틀 및 제단 레벨 */
