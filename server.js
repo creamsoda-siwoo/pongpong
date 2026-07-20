@@ -936,6 +936,11 @@ app.delete('/api/frames/:id', authenticateToken, async (req, res) => {
   }
 });
 
+// 파비콘 라우트
+app.get('/favicon.ico', (req, res) => {
+  res.sendFile(path.join(__dirname, 'public', 'pompompurin.png'));
+});
+
 // 메인 페이지 라우트 백업
 app.get('/', (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'index.html'));
