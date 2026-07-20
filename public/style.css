@@ -1846,7 +1846,56 @@ body.skin-sakura .aurora-glow {
   transition: all 0.2s;
 }
 
-.quiz-option-btn:hover {
-  background: var(--primary-yellow);
-  border-color: var(--dark-brown);
+/* 포춘 쿠키 섹션 */
+.fortune-section {
+  padding: 50px 20px;
+  background: var(--card-bg);
+  border-radius: 30px;
+  margin: 40px auto;
+  max-width: 900px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.05);
+  border: 1.5px solid var(--glass-border);
+}
+
+.cookie-graphic {
+  font-size: 80px;
+  cursor: pointer;
+  display: inline-block;
+  transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+  user-select: none;
+}
+
+.cookie-graphic:hover, .cookie-graphic:active {
+  transform: scale(1.2) rotate(12deg);
+}
+
+.cookie-cracked {
+  animation: crackShake 0.4s ease-in-out;
+}
+
+@keyframes crackShake {
+  0% { transform: scale(1) rotate(0deg); }
+  25% { transform: scale(1.1) rotate(-10deg); }
+  50% { transform: scale(1.1) rotate(10deg); }
+  75% { transform: scale(0.9) rotate(-5deg); }
+  100% { transform: scale(1) rotate(0deg); }
+}
+
+.fortune-paper {
+  margin: 20px auto 0 auto;
+  max-width: 500px;
+  background: #FFFDE7;
+  border: 2px dashed var(--gold);
+  border-radius: 16px;
+  padding: 18px 24px;
+  box-shadow: 0 4px 15px rgba(255, 215, 0, 0.3);
+  animation: fadeInDown 0.5s ease-out;
+}
+
+.fortune-paper-content {
+  font-weight: 700;
+  font-size: 15px;
+  color: var(--dark-brown);
+  line-height: 1.6;
+  font-family: 'Gowun Batang', serif;
 }

@@ -2188,3 +2188,37 @@ window.rollGachaBox = async function() {
     alert('가챠 처리 중 오류가 발생했습니다.');
   }
 };
+
+// --- 🥠 일일 포춘 쿠키 핸들러 ---
+window.crackFortuneCookie = function() {
+  const cookieEl = document.getElementById('cookieGraphic');
+  const paperEl = document.getElementById('fortunePaper');
+  const contentEl = document.getElementById('fortunePaperContent');
+
+  if (cookieEl) {
+    cookieEl.classList.remove('cookie-cracked');
+    void cookieEl.offsetWidth;
+    cookieEl.classList.add('cookie-cracked');
+  }
+
+  playChimeSound(1.6);
+
+  const fortunes = [
+    `🥠 "들판의 푸딩도 흔들릴지니, 오늘 당신에겐 달콤한 대박 행운과 +30 PPC가 찾아옵니다!"`,
+    `🥠 "퐁퐁복음 제 3장: 서두르지 않는 지혜가 모든 시련을 이기게 해주리라. (+30 PPC)"`,
+    `🥠 "악당 퐁퐁푸틴의 시련도 순수한 마음에 녹아내립니다. 행복한 하루 되세요! (+30 PPC)"`,
+    `🥠 "오늘 마음을 다해 숭배 버튼을 누르면 상상 그 이상의 피버 보너스가 터집니다! (+30 PPC)"`,
+    `🥠 "친절과 평화가 퐁퐁푸린의 보살핌 속에서 배가 될 것입니다. (+30 PPC)"`
+  ];
+
+  const fortune = fortunes[Math.floor(Math.random() * fortunes.length)];
+  if (contentEl) contentEl.innerHTML = fortune;
+  if (paperEl) paperEl.style.display = 'block';
+
+  state.userCoins = (state.userCoins || 0) + 30;
+  const coinEl = document.getElementById('headerUserCoins');
+  if (coinEl) coinEl.innerText = state.userCoins.toLocaleString();
+
+  playFanfareSound();
+  showToast('🥠 포춘 쿠키 해금! +30 PPC 획득!');
+};
