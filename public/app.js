@@ -1365,13 +1365,16 @@ function createFloatingParticle(e) {
 }
 
 // 폼 핸들러
-async function handleRegister(e) {
+window.handleRegister = async function(e) {
   e.preventDefault();
-  const username = document.getElementById('registerUsername').value.trim();
-  const password = document.getElementById('registerPassword').value;
+  const regUserEl = document.getElementById('registerUsername');
+  const regPassEl = document.getElementById('registerPassword');
+  const username = regUserEl ? regUserEl.value.trim() : '';
+  const password = regPassEl ? regPassEl.value : '';
 
   if (!username || !password) {
-    alert('사용자 이름과 비밀번호를 입력해주세요.');
+    if (window.showToast) showToast('사용자 이름과 비밀번호를 입력해주세요.');
+    else alert('사용자 이름과 비밀번호를 입력해주세요.');
     return;
   }
 
@@ -1384,33 +1387,39 @@ async function handleRegister(e) {
     
     const data = await res.json();
     if (res.ok && data.success) {
-      showToast(data.message || '가입 완료!');
+      if (window.showToast) showToast(data.message || '가입 완료!');
       if (data.user) {
         state.isLoggedIn = true;
         state.user = data.user;
         state.userWorshipCount = parseInt(data.user.worship_count) || 0;
+        state.userCoins = (data.user.coins !== undefined && data.user.coins !== null) ? parseInt(data.user.coins) : 100;
         updateAuthUI();
       }
       closeModal('registerModal');
-      el.registerForm.reset();
+      if (el.registerForm) el.registerForm.reset();
       fetchStats();
       fetchLeaderboard();
     } else {
-      alert(data.error || '회원가입에 실패했습니다.');
+      if (window.showToast) showToast(data.error || '회원가입에 실패했습니다.');
+      else alert(data.error || '회원가입에 실패했습니다.');
     }
   } catch (err) {
     console.error(err);
-    alert('서버와 통신 중 오류가 발생했습니다.');
+    if (window.showToast) showToast('서버와 통신 중 오류가 발생했습니다.');
+    else alert('서버와 통신 중 오류가 발생했습니다.');
   }
-}
+};
 
-async function handleLogin(e) {
+window.handleLogin = async function(e) {
   e.preventDefault();
-  const username = document.getElementById('loginUsername').value.trim();
-  const password = document.getElementById('loginPassword').value;
+  const loginUserEl = document.getElementById('loginUsername');
+  const loginPassEl = document.getElementById('loginPassword');
+  const username = loginUserEl ? loginUserEl.value.trim() : '';
+  const password = loginPassEl ? loginPassEl.value : '';
 
   if (!username || !password) {
-    alert('사용자 이름과 비밀번호를 입력해주세요.');
+    if (window.showToast) showToast('사용자 이름과 비밀번호를 입력해주세요.');
+    else alert('사용자 이름과 비밀번호를 입력해주세요.');
     return;
   }
 
@@ -1426,21 +1435,29 @@ async function handleLogin(e) {
       state.isLoggedIn = true;
       state.user = data.user;
       state.userWorshipCount = parseInt(data.user.worship_count) || 0;
+      state.userCoins = (data.user.coins !== undefined && data.user.coins !== null) ? parseInt(data.user.coins) : 100;
+      state.inventory = data.user.inventory || [];
+      state.equippedSkin = data.user.equipped_skin || 'default';
+      applyEquippedSkin(state.equippedSkin);
+
       updateAuthUI();
       closeModal('loginModal');
-      el.loginForm.reset();
-      showToast(`${state.user.username}님 환영합니다!`);
+      if (el.loginForm) el.loginForm.reset();
+      playFanfareSound();
+      if (window.showToast) showToast(`🍮 ${state.user.username}님 환영합니다!`);
       
       fetchStats();
       fetchLeaderboard();
     } else {
-      alert(data.error || '로그인에 실패했습니다.');
+      if (window.showToast) showToast(data.error || '사용자 이름 또는 비밀번호가 올바르지 않습니다.');
+      else alert(data.error || '사용자 이름 또는 비밀번호가 올바르지 않습니다.');
     }
   } catch (err) {
     console.error(err);
-    alert('서버와 통신 중 오류가 발생했습니다.');
+    if (window.showToast) showToast('서버 통신 중 오류가 발생했습니다.');
+    else alert('서버 통신 중 오류가 발생했습니다.');
   }
-}
+};
 
 window.handleLogout = async function() {
   try {

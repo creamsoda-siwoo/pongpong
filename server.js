@@ -221,12 +221,19 @@ app.post('/api/auth/login', async (req, res) => {
     if (isMockDb) {
       user = mockDb.users.find(u => u.username.toLowerCase() === trimmedUsername.toLowerCase());
     } else {
-      const { data, error } = await supabase
-        .from('worship_users')
-        .select('*')
-        .ilike('username', trimmedUsername)
-        .maybeSingle();
-      if (!error && data) user = data;
+      try {
+        const { data, error } = await supabase
+          .from('worship_users')
+          .select('*')
+          .ilike('username', trimmedUsername)
+          .maybeSingle();
+        if (!error && data) user = data;
+      } catch (sbErr) {}
+
+      // Supabase 조회 실패 시 local mockDb Fallback 검색
+      if (!user && mockDb && mockDb.users) {
+        user = mockDb.users.find(u => u.username.toLowerCase() === trimmedUsername.toLowerCase());
+      }
     }
 
     if (!user) {
