@@ -1722,3 +1722,469 @@ function updateIdentityCardView() {
   if (countEl) countEl.innerText = `${count.toLocaleString()} 회`;
   if (dateEl) dateEl.innerText = today;
 }
+
+// --- 🔥 피버 모드 (FEVER MODE) ---
+let isFeverActive = false;
+let feverTimer = null;
+
+function triggerFeverCheck() {
+  if (state.combo >= 15 && !isFeverActive) {
+    isFeverActive = true;
+    playFanfareSound();
+    showToast('🔥 피버 모드 발동! 숭배 코인 3배 획득!');
+
+    const banner = document.getElementById('feverBanner');
+    if (banner) banner.style.display = 'block';
+
+    for (let i = 0; i < 15; i++) {
+      setTimeout(() => { createFloatingParticle(); }, i * 80);
+    }
+
+    clearTimeout(feverTimer);
+    feverTimer = setTimeout(() => {
+      isFeverActive = false;
+      if (banner) banner.style.display = 'none';
+      showToast('피버 모드가 종료되었습니다.');
+    }, 10000);
+  }
+}
+
+// --- 🐾 성전 펫 상호작용 ---
+window.interactPet = function(petId) {
+  playChimeSound(1.5);
+  state.userCoins = (state.userCoins || 0) + 5;
+  const coinEl = document.getElementById('headerUserCoins');
+  if (coinEl) coinEl.innerText = state.userCoins.toLocaleString();
+
+  const petNames = { macaron: '🐶 마카롱', muffin: '🐱 머핀', scone: '🐿️ 스콘', powder: '🐥 파우더' };
+  showToast(`${petNames[petId] || '친구'}와 놀아주고 +5 코인 획득!`);
+};
+
+// --- 🎰 퐁퐁 럭키 슬롯머신 ---
+let isSlotSpinning = false;
+
+window.spinPuddingSlot = function() {
+  if (isSlotSpinning) return;
+  if (state.userCoins < 20) {
+    alert('슬롯머신 이용을 위해 최소 20 PPC가 필요합니다.');
+    return;
+  }
+
+  state.userCoins -= 20;
+  const coinEl = document.getElementById('headerUserCoins');
+  if (coinEl) coinEl.innerText = state.userCoins.toLocaleString();
+
+  isSlotSpinning = true;
+  playChimeSound(1.2);
+
+  const symbols = ['🍮', '🧁', '🍨', '🎂', '🍩', '👑'];
+  const reel1 = document.getElementById('reel1');
+  const reel2 = document.getElementById('reel2');
+  const reel3 = document.getElementById('reel3');
+  const resultText = document.getElementById('slotResultText');
+
+  if (resultText) resultText.innerText = '슬롯머신 회전 중...';
+
+  let spinCount = 0;
+  const spinInterval = setInterval(() => {
+    spinCount++;
+    if (reel1) reel1.innerText = symbols[Math.floor(Math.random() * symbols.length)];
+    if (reel2) reel2.innerText = symbols[Math.floor(Math.random() * symbols.length)];
+    if (reel3) reel3.innerText = symbols[Math.floor(Math.random() * symbols.length)];
+
+    if (spinCount >= 20) {
+      clearInterval(spinInterval);
+      isSlotSpinning = false;
+
+      const s1 = symbols[Math.floor(Math.random() * symbols.length)];
+      const s2 = symbols[Math.floor(Math.random() * symbols.length)];
+      const s3 = symbols[Math.floor(Math.random() * symbols.length)];
+
+      if (reel1) reel1.innerText = s1;
+      if (reel2) reel2.innerText = s2;
+      if (reel3) reel3.innerText = s3;
+
+      if (s1 === s2 && s2 === s3) {
+        state.userCoins += 777;
+        if (coinEl) coinEl.innerText = state.userCoins.toLocaleString();
+        playFanfareSound();
+        if (resultText) resultText.innerText = '🎉 잭팟 터짐! 777 PPC 대박 상금 획득!';
+        showToast('🎉 잭팟! 777 PPC 획득!');
+      } else if (s1 === s2 || s2 === s3 || s1 === s3) {
+        state.userCoins += 40;
+        if (coinEl) coinEl.innerText = state.userCoins.toLocaleString();
+        playChimeSound(1.6);
+        if (resultText) resultText.innerText = '✨ 2개 당첨! 40 PPC 보너스 획득!';
+      } else {
+        if (resultText) resultText.innerText = '다음 기회에... 아쉽지만 재도전해보세요!';
+      }
+    }
+  }, 80);
+};
+
+// --- 🤖 퐁퐁푸린 AI 챗봇 ---
+window.handleSendAiMessage = function(e) {
+  e.preventDefault();
+  const inputEl = document.getElementById('aiInputMsg');
+  const feed = document.getElementById('aiChatFeed');
+  const msg = inputEl ? inputEl.value.trim() : '';
+  if (!msg) return;
+
+  if (inputEl) inputEl.value = '';
+
+  const userMsgDiv = document.createElement('div');
+  userMsgDiv.className = 'ai-chat-msg user';
+  userMsgDiv.innerText = msg;
+  if (feed) {
+    feed.appendChild(userMsgDiv);
+    feed.scrollTop = feed.scrollHeight;
+  }
+
+  playChimeSound(1.1);
+
+  setTimeout(() => {
+    const aiResponses = [
+      `🍮 "퐁퐁! ${msg}에 대해 퐁퐁복음 제 1장을 묵상해보세요. 들판의 푸딩도 흔들리지만 마음엔 평화가 올 거랍니다!"`,
+      `🍮 "퐁퐁! 당신의 마음속 푸딩 수치는 무려 84점 이상이에요! 걱정 마시고 숭배 버튼을 눌러보세요!"`,
+      `🍮 "퐁퐁! 악당 퐁퐁푸틴의 시련이 오더라도 선한 순수함이 항상 승리한답니다. 힘내세요!"`,
+      `🍮 "퐁퐁! 오늘 퐁퐁 럭키 룰렛을 돌리면 놀라운 디저트 축복이 찾아올 거예요!"`,
+      `🍮 "퐁퐁! 동료들과 기쁨을 나누면 두 배가 되고 두려움은 반으로 줄어든답니다!"`
+    ];
+
+    const reply = aiResponses[Math.floor(Math.random() * aiResponses.length)];
+    const aiMsgDiv = document.createElement('div');
+    aiMsgDiv.className = 'ai-chat-msg purin';
+    aiMsgDiv.innerHTML = reply;
+    if (feed) {
+      feed.appendChild(aiMsgDiv);
+      feed.scrollTop = feed.scrollHeight;
+    }
+
+    playChimeSound(1.5);
+  }, 800);
+};
+
+// --- 🧠 퐁퐁복음 퀴즈 챌린지 ---
+const quizData = [
+  { q: "퐁퐁푸린님의 유명한 사회성 지적 능력 점수는 몇 점일까요?", options: ["60점", "70점", "84점", "100점"], answer: 2 },
+  { q: "퐁퐁푸린의 주적인 악당의 이름은 무엇일까요?", options: ["퐁퐁바이든", "퐁퐁푸틴", "퐁퐁트럼프", "퐁퐁시진핑"], answer: 1 },
+  { q: "퐁퐁복음에서 두 자가 서로를 바라볼 때 흔들린 것은 무엇일까요?", options: ["들판의 푸딩", "바다의 물결", "하늘의 별", "산의 바위"], answer: 0 },
+  { q: "퐁퐁복음은 총 몇 장으로 구성되어 있을까요?", options: ["5장", "8장", "10장", "12장"], answer: 2 },
+  { q: "푸딩 짝맞추기 게임에서 카드 쌍은 총 몇 쌍일까요?", options: ["4쌍", "6쌍", "8쌍", "10쌍"], answer: 2 }
+];
+
+let currentQuizIdx = 0;
+let quizScore = 0;
+
+function startGospelQuiz() {
+  currentQuizIdx = 0;
+  quizScore = 0;
+  renderQuizQuestion();
+}
+
+function renderQuizQuestion() {
+  const container = document.getElementById('quizContainer');
+  if (!container) return;
+
+  if (currentQuizIdx >= quizData.length) {
+    playFanfareSound();
+    state.userCoins += 200;
+    const coinEl = document.getElementById('headerUserCoins');
+    if (coinEl) coinEl.innerText = state.userCoins.toLocaleString();
+
+    container.innerHTML = `
+      <div style="text-align:center; padding:20px;">
+        <div style="font-size:48px;">🏆</div>
+        <h3>퀴즈 챌린지 만점 완파!</h3>
+        <p style="margin:10px 0; color:var(--dark-brown-light);">보상으로 +200 PPC 획득!</p>
+        <button class="btn btn-primary" onclick="startGospelQuiz()">다시 도전하기</button>
+      </div>
+    `;
+    return;
+  }
+
+  const q = quizData[currentQuizIdx];
+  const numEl = document.getElementById('quizCurrentNum');
+  const textEl = document.getElementById('quizQuestionText');
+  if (numEl) numEl.innerText = currentQuizIdx + 1;
+  if (textEl) textEl.innerText = q.q;
+
+  const list = document.getElementById('quizOptionsList');
+  if (!list) return;
+  list.innerHTML = '';
+
+  q.options.forEach((opt, idx) => {
+    const btn = document.createElement('button');
+    btn.className = 'quiz-option-btn';
+    btn.innerText = `${idx + 1}. ${opt}`;
+    btn.onclick = () => {
+      if (idx === q.answer) {
+        quizScore++;
+        playChimeSound(1.6);
+        showToast('⭕ 정답입니다!');
+      } else {
+        showToast('❌ 오답입니다!');
+      }
+      currentQuizIdx++;
+      renderQuizQuestion();
+    };
+    list.appendChild(btn);
+  });
+}
+
+// --- 🖼️ 액자 갤러리 핸들러 ---
+let selectedFrameImageData = null;
+
+window.previewFrameImage = function(event) {
+  const file = event.target.files[0];
+  if (!file) return;
+
+  if (file.size > 2 * 1024 * 1024) {
+    alert("이미지 크기는 2MB 이하만 가능합니다.");
+    event.target.value = "";
+    return;
+  }
+
+  const reader = new FileReader();
+  reader.onload = function(e) {
+    selectedFrameImageData = e.target.result;
+    const previewArea = document.getElementById("framePreviewArea");
+    const imgEl = document.getElementById("frameLiveImg");
+    if (imgEl) imgEl.src = selectedFrameImageData;
+    if (previewArea) previewArea.style.display = "block";
+    updateFramePreview();
+  };
+  reader.readAsDataURL(file);
+};
+
+window.updateFramePreview = function() {
+  const titleInput = document.getElementById('frameTitle');
+  const titleVal = titleInput ? titleInput.value.trim() : '성스러운 퐁퐁 사진';
+  const selectedStyle = document.querySelector('input[name="frameStyle"]:checked')?.value || 'frame-gold';
+  
+  const liveBox = document.getElementById('frameLiveBox');
+  const liveTitle = document.getElementById('frameLiveTitle');
+
+  if (liveBox) liveBox.className = `framed-photo-box ${selectedStyle}`;
+  if (liveTitle) liveTitle.innerText = titleVal || '성스러운 퐁퐁 사진';
+};
+
+window.handleUploadFrame = async function(e) {
+  e.preventDefault();
+  if (!state.isLoggedIn) {
+    alert('액자를 등록하려면 먼저 로그인해 주세요.');
+    openModal('loginModal');
+    return;
+  }
+
+  const titleInput = document.getElementById('frameTitle');
+  const title = titleInput ? titleInput.value.trim() : '';
+  const frameStyle = document.querySelector('input[name="frameStyle"]:checked')?.value || 'frame-gold';
+  const imageData = selectedFrameImageData;
+
+  if (!imageData) {
+    alert('이미지 파일을 선택해 주세요.');
+    return;
+  }
+
+  try {
+    const res = await fetch('/api/frames', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ title, image_data: imageData, frame_style: frameStyle })
+    });
+
+    const data = await res.json();
+    if (res.ok && data.success) {
+      const form = document.getElementById('frameUploadForm');
+      if (form) form.reset();
+      selectedFrameImageData = null;
+      const previewArea = document.getElementById('framePreviewArea');
+      if (previewArea) previewArea.style.display = 'none';
+      playFanfareSound();
+      showToast('🖼️ 갤러리에 퐁퐁 액자가 걸렸습니다!');
+      fetchFrames();
+    } else {
+      alert(data.error || '액자 등록 실패');
+    }
+  } catch (err) {
+    console.error(err);
+    alert('액자 게시 중 오류 발생');
+  }
+};
+
+async function fetchFrames() {
+  const grid = document.getElementById('frameWallGrid');
+  if (!grid) return;
+
+  try {
+    const res = await fetch('/api/frames');
+    const list = await res.json();
+
+    grid.innerHTML = '';
+    if (!list || list.length === 0) {
+      grid.innerHTML = `<p style="text-align:center; padding:40px; color:var(--dark-brown-light); grid-column: 1/-1;">아직 전시장에 게시된 액자가 없습니다. 첫 액자를 걸어보세요!</p>`;
+      return;
+    }
+
+    list.forEach(frame => {
+      const card = document.createElement('div');
+      card.className = 'frame-item-card';
+
+      const isMyFrame = state.isLoggedIn && state.user && state.user.username === frame.username;
+      const deleteBtnHtml = isMyFrame ? `
+        <button class="post-delete-btn" onclick="handleDeleteFrame('${frame.id}')" title="액자 삭제"><i class="fa-solid fa-trash-can"></i></button>
+      ` : '';
+
+      card.innerHTML = `
+        <div class="framed-photo-box ${frame.frame_style || 'frame-gold'}">
+          <img src="${frame.image_data}" alt="${escapeHTML(frame.title)}" onclick="window.open('${frame.image_data}')">
+          <div class="frame-title-tag">${escapeHTML(frame.title)}</div>
+        </div>
+        <div class="frame-meta">
+          <span>👤 ${escapeHTML(frame.username)}</span>
+          <div style="display:flex; align-items:center; gap:8px;">
+            <button class="post-react-btn" onclick="handleReactFrame('${frame.id}', this)"><i class="fa-solid fa-heart" style="color:#e53935;"></i> <span class="react-count">${frame.reactions || 0}</span></button>
+            ${deleteBtnHtml}
+          </div>
+        </div>
+      `;
+      grid.appendChild(card);
+    });
+  } catch (err) {
+    console.error('액자 불러오기 실패:', err);
+  }
+}
+
+window.handleReactFrame = async function(frameId, btnEl) {
+  try {
+    playChimeSound(1.3);
+    const res = await fetch(`/api/frames/${frameId}/react`, { method: 'POST' });
+    const data = await res.json();
+    if (data.success) {
+      const countEl = btnEl.querySelector('.react-count');
+      if (countEl) countEl.innerText = data.reactions;
+    }
+  } catch (e) {}
+};
+
+window.handleDeleteFrame = async function(frameId) {
+  if (!confirm('이 퐁퐁 액자를 갤러리에서 삭제하시겠습니까?')) return;
+  try {
+    const res = await fetch(`/api/frames/${frameId}`, { method: 'DELETE' });
+    const data = await res.json();
+    if (res.ok && data.success) {
+      showToast('액자가 삭제되었습니다.');
+      fetchFrames();
+    } else {
+      alert(data.error || '액자 삭제 실패');
+    }
+  } catch (err) {
+    alert('오류 발생');
+  }
+};
+
+// --- 🛒 상점 & 가챠 탭 핸들러 ---
+window.switchShopTab = function(tabName) {
+  const tabSkins = document.getElementById('tabShopSkins');
+  const tabGacha = document.getElementById('tabShopGacha');
+  const tabInv = document.getElementById('tabShopInventory');
+
+  if (tabSkins) tabSkins.classList.remove('active');
+  if (tabGacha) tabGacha.classList.remove('active');
+  if (tabInv) tabInv.classList.remove('active');
+
+  const viewSkins = document.getElementById('shopViewSkins');
+  const viewGacha = document.getElementById('shopViewGacha');
+  const viewInv = document.getElementById('shopViewInventory');
+
+  if (viewSkins) viewSkins.style.display = 'none';
+  if (viewGacha) viewGacha.style.display = 'none';
+  if (viewInv) viewInv.style.display = 'none';
+
+  if (tabName === 'skins') {
+    if (tabSkins) tabSkins.classList.add('active');
+    if (viewSkins) viewSkins.style.display = 'block';
+  } else if (tabName === 'gacha') {
+    if (tabGacha) tabGacha.classList.add('active');
+    if (viewGacha) viewGacha.style.display = 'block';
+  } else if (tabName === 'inventory') {
+    if (tabInv) tabInv.classList.add('active');
+    if (viewInv) viewInv.style.display = 'block';
+    renderInventoryList();
+  }
+};
+
+window.buyShopItem = async function(itemId, price) {
+  if (!state.isLoggedIn) {
+    alert('상점 이용을 위해 먼저 로그인해 주세요.');
+    openModal('loginModal');
+    return;
+  }
+
+  try {
+    const res = await fetch('/api/shop/buy', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ itemId, price })
+    });
+    const data = await res.json();
+    if (res.ok && data.success) {
+      state.userCoins = data.coins;
+      state.inventory = data.inventory;
+      state.equippedSkin = data.equipped_skin;
+      applyEquippedSkin(state.equippedSkin);
+      updateAuthUI();
+      playFanfareSound();
+      showToast('🎉 스킨 구매 및 장착 완료!');
+    } else {
+      alert(data.error || '구매에 실패했습니다.');
+    }
+  } catch (err) {
+    console.error(err);
+    alert('구매 처리 중 오류가 발생했습니다.');
+  }
+};
+
+window.rollGachaBox = async function() {
+  if (!state.isLoggedIn) {
+    alert('가챠 이용을 위해 먼저 로그인해 주세요.');
+    openModal('loginModal');
+    return;
+  }
+
+  const resultArea = document.getElementById('gachaResultArea');
+  const boxIcon = document.getElementById('gachaBoxIcon');
+
+  if (boxIcon) boxIcon.style.animation = 'bounceGacha 0.3s infinite ease-in-out';
+
+  try {
+    const res = await fetch('/api/gacha/roll', { method: 'POST' });
+    const data = await res.json();
+    
+    setTimeout(() => {
+      if (boxIcon) boxIcon.style.animation = 'bounceGacha 2s infinite ease-in-out';
+      if (res.ok && data.success) {
+        state.userCoins = data.coins;
+        state.inventory = data.inventory;
+        updateAuthUI();
+        playFanfareSound();
+
+        if (resultArea) {
+          resultArea.style.display = 'block';
+          resultArea.innerHTML = `
+            <div style="font-size:48px;">${data.loot.icon}</div>
+            <h4 style="font-size:18px; margin:8px 0;">[${data.loot.rarity}] ${data.loot.name}</h4>
+            <p style="font-size:13px; color:var(--dark-brown-light);">보유품 목록에 저장되었습니다!</p>
+          `;
+        }
+        showToast(`🎁 가챠 획득! [${data.loot.name}]`);
+      } else {
+        alert(data.error || '뽑기 실패');
+      }
+    }, 1000);
+  } catch (err) {
+    console.error(err);
+    alert('가챠 처리 중 오류가 발생했습니다.');
+  }
+};
