@@ -615,7 +615,7 @@ app.post('/api/worship', authenticateToken, async (req, res) => {
       // 로그인 상태면 유저 숭배수 및 코인 증가
       if (req.user) {
         const { data: uData, error: uError } = await supabase
-          .rpc('increment_worship_user', { user_id: req.user.id });
+          .rpc('increment_worship_user', { p_user_id: req.user.id });
 
         if (uError) {
           const { data: selectU } = await supabase
