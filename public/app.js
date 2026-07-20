@@ -544,6 +544,14 @@ window.copyCurrentChapter = function() {
 
 // --- 미니게임 전환 탭 ---
 window.switchMiniGame = function(gameType) {
+  // 이전 진행 중인 게임 타이머 정리
+  gameActive = false;
+  clearInterval(gameInterval);
+  clearInterval(spawnInterval);
+  clearInterval(memoryTimerInterval);
+  clearInterval(smashTimerInterval);
+  clearInterval(smashPopInterval);
+
   document.getElementById('tabCatchGame').classList.remove('active');
   document.getElementById('tabMemoryGame').classList.remove('active');
   document.getElementById('tabSmashGame').classList.remove('active');
