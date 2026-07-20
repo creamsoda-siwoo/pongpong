@@ -316,16 +316,35 @@ app.get('/api/auth/me', authenticateToken, async (req, res) => {
   try {
     let userDetails = null;
 
-    if (isMockDb) {
-      const user = mockDb.users.find(u => u.id === req.user.id);
-      if (user) userDetails = user;
-    } else {
-      const { data, error } = await supabase
-        .from('worship_users')
-        .select('*')
-        .eq('id', req.user.id)
-        .maybeSingle();
-      if (data && !error) userDetails = data;
+    // 1. Supabase에서 ID 또는 Username으로 유저 조회 시도
+    if (!isMockDb && supabase) {
+      try {
+        let { data, error } = await supabase
+          .from('worship_users')
+          .select('*')
+          .eq('id', req.user.id)
+          .maybeSingle();
+
+        if (!data || error) {
+          const { data: dataByName } = await supabase
+            .from('worship_users')
+            .select('*')
+            .ilike('username', req.user.username)
+            .maybeSingle();
+          if (dataByName) data = dataByName;
+        }
+
+        if (data) userDetails = data;
+      } catch (sbErr) {}
+    }
+
+    // 2. Supabase 조회 실패 시 local mockDb Fallback 검색
+    if (!userDetails && mockDb && mockDb.users) {
+      const u = mockDb.users.find(u => 
+        (req.user.id && u.id === req.user.id) || 
+        (req.user.username && u.username.toLowerCase() === req.user.username.toLowerCase())
+      );
+      if (u) userDetails = u;
     }
 
     if (!userDetails) {
@@ -338,8 +357,8 @@ app.get('/api/auth/me', authenticateToken, async (req, res) => {
       user: {
         id: userDetails.id,
         username: userDetails.username,
-        worship_count: userDetails.worship_count || 0,
-        coins: userDetails.coins || 100,
+        worship_count: parseInt(userDetails.worship_count || 0),
+        coins: (userDetails.coins !== undefined && userDetails.coins !== null) ? parseInt(userDetails.coins) : 100,
         inventory: userDetails.inventory || [],
         equipped_skin: userDetails.equipped_skin || 'default',
         last_attendance: userDetails.last_attendance || null

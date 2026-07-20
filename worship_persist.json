@@ -19,6 +19,26 @@
       "inventory": [],
       "equipped_skin": "default",
       "created_at": "2026-07-20T11:56:13.465Z"
+    },
+    {
+      "id": "4lhwftcvh",
+      "username": "relogin_test_1784548956509",
+      "password_hash": "$2a$10$XFwMG5ZJnqNrFZOtlAaFj.3FfoDFLi.DvjWNZkTO1Bgujyg8PXrvm",
+      "worship_count": 0,
+      "coins": 100,
+      "inventory": [],
+      "equipped_skin": "default",
+      "created_at": "2026-07-20T12:02:37.588Z"
+    },
+    {
+      "id": "emyjpe8ak",
+      "username": "relogin_test_1784548996415",
+      "password_hash": "$2a$10$4bgLS684SfZhVWb8NzWem.C1X60GkgxEkLuDxPDOY88waSxFNpC7O",
+      "worship_count": 0,
+      "coins": 100,
+      "inventory": [],
+      "equipped_skin": "default",
+      "created_at": "2026-07-20T12:03:16.884Z"
     }
   ],
   "globalCount": 0,
