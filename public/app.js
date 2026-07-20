@@ -402,23 +402,23 @@ function renderTrophyModal() {
   });
 }
 
-// DOM 캐시
+// DOM 캐시 (상시 최신 DOM 참조)
 const el = {
-  bgParticles: document.getElementById('bgParticles'),
-  authSection: document.getElementById('authSection'),
-  worshipButton: document.getElementById('worshipButton'),
-  globalWorshipCount: document.getElementById('globalWorshipCount'),
-  userWorshipCount: document.getElementById('userWorshipCount'),
-  userStatCard: document.getElementById('userStatCard'),
-  loginPrompt: document.getElementById('loginPrompt'),
-  chapterNav: document.getElementById('chapterNav'),
-  currentChapterTitle: document.getElementById('currentChapterTitle'),
-  gospelContent: document.getElementById('gospelContent'),
-  boardWriteContainer: document.getElementById('boardWriteContainer'),
-  boardFeed: document.getElementById('boardFeed'),
-  rankList: document.getElementById('rankList'),
-  loginForm: document.getElementById('loginForm'),
-  registerForm: document.getElementById('registerForm')
+  get bgParticles() { return document.getElementById('bgParticles'); },
+  get authSection() { return document.getElementById('authSection'); },
+  get worshipButton() { return document.getElementById('worshipButton'); },
+  get globalWorshipCount() { return document.getElementById('globalWorshipCount'); },
+  get userWorshipCount() { return document.getElementById('userWorshipCount'); },
+  get userStatCard() { return document.getElementById('userStatCard'); },
+  get loginPrompt() { return document.getElementById('loginPrompt'); },
+  get chapterNav() { return document.getElementById('chapterNav'); },
+  get currentChapterTitle() { return document.getElementById('currentChapterTitle'); },
+  get gospelContent() { return document.getElementById('gospelContent'); },
+  get boardWriteContainer() { return document.getElementById('boardWriteContainer'); },
+  get boardFeed() { return document.getElementById('boardFeed'); },
+  get rankList() { return document.getElementById('rankList'); },
+  get loginForm() { return document.getElementById('loginForm'); },
+  get registerForm() { return document.getElementById('registerForm'); }
 };
 
 // --- 초기화 ---

@@ -498,7 +498,7 @@
     <div class="modal-content">
       <span class="close-btn" onclick="closeModal('loginModal')">&times;</span>
       <h2>성도 로그인</h2>
-      <form id="loginForm">
+      <form id="loginForm" onsubmit="handleLogin(event)">
         <div class="form-group">
           <label for="loginUsername"><i class="fa-solid fa-user"></i> 이름 (Username)</label>
           <input type="text" id="loginUsername" required placeholder="이름을 입력하세요">
@@ -519,7 +519,7 @@
     <div class="modal-content">
       <span class="close-btn" onclick="closeModal('registerModal')">&times;</span>
       <h2>신도 서약 (회원가입)</h2>
-      <form id="registerForm">
+      <form id="registerForm" onsubmit="handleRegister(event)">
         <div class="form-group">
           <label for="registerUsername"><i class="fa-solid fa-user"></i> 이름 (Username)</label>
           <input type="text" id="registerUsername" required placeholder="성전에서 쓸 이름을 입력하세요" maxlength="15">
