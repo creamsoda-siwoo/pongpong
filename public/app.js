@@ -1288,15 +1288,14 @@ async function handleWorshipClick(e) {
     if (comboEl) comboEl.style.display = 'none';
   }, 1500);
 
-  pendingGlobalClicks++;
-  el.globalWorshipCount.innerText = (state.globalWorshipCount + pendingGlobalClicks).toLocaleString();
+  state.globalWorshipCount++;
+  el.globalWorshipCount.innerText = state.globalWorshipCount.toLocaleString();
   updateShrineLevelProgress();
 
-  if (state.isLoggedIn) {
-    pendingUserClicks++;
-    const displayUserCount = state.userWorshipCount + pendingUserClicks;
-    el.userWorshipCount.innerText = displayUserCount.toLocaleString();
-    updateUserRankBadge(displayUserCount);
+  state.userWorshipCount++;
+  if (el.userWorshipCount) {
+    el.userWorshipCount.innerText = state.userWorshipCount.toLocaleString();
+    updateUserRankBadge(state.userWorshipCount);
   }
 
   try {
@@ -1314,6 +1313,8 @@ async function handleWorshipClick(e) {
           const serverUserCount = parseInt(data.userCount || 0);
           if (serverUserCount > state.userWorshipCount) {
             state.userWorshipCount = serverUserCount;
+            el.userWorshipCount.innerText = state.userWorshipCount.toLocaleString();
+            updateUserRankBadge(state.userWorshipCount);
           }
         }
         if (data.userCoins !== undefined && data.userCoins !== null) {
@@ -1326,16 +1327,11 @@ async function handleWorshipClick(e) {
   } catch (err) {
     console.error('숭배 요청 전송 오류:', err);
   } finally {
-    if (pendingGlobalClicks > 0) pendingGlobalClicks--;
-    if (pendingUserClicks > 0) pendingUserClicks--;
-
-    el.globalWorshipCount.innerText = (state.globalWorshipCount + pendingGlobalClicks).toLocaleString();
+    el.globalWorshipCount.innerText = state.globalWorshipCount.toLocaleString();
     updateShrineLevelProgress();
-
-    if (state.isLoggedIn) {
-      const displayUserCount = state.userWorshipCount + pendingUserClicks;
-      el.userWorshipCount.innerText = displayUserCount.toLocaleString();
-      updateUserRankBadge(displayUserCount);
+    if (el.userWorshipCount) {
+      el.userWorshipCount.innerText = state.userWorshipCount.toLocaleString();
+      updateUserRankBadge(state.userWorshipCount);
     }
   }
 }

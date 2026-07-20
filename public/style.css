@@ -1738,28 +1738,44 @@ body.skin-sakura .aurora-glow {
   100% { background-position: 0% 50%; }
 }
 
-/* 성전 펫 친구들 */
+/* 성전 펫 친구들 (제단 밑 가로 배치) */
 .shrine-pets-bar {
   display: flex;
+  flex-direction: row;
+  flex-wrap: nowrap;
   justify-content: center;
+  align-items: center;
   gap: 10px;
-  margin-top: 10px;
+  margin-top: 15px;
+  width: 100%;
+  overflow-x: auto;
+  padding: 6px 4px;
+  scrollbar-width: none;
+}
+
+.shrine-pets-bar::-webkit-scrollbar {
+  display: none;
 }
 
 .shrine-pet {
   background: var(--card-bg);
-  border: 1px solid var(--glass-border);
-  padding: 4px 10px;
-  border-radius: 14px;
-  font-size: 12px;
+  border: 1.5px solid var(--glass-border);
+  padding: 8px 14px;
+  border-radius: 18px;
+  font-size: 13px;
   font-weight: 700;
   cursor: pointer;
+  white-space: nowrap;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  box-shadow: 0 3px 8px rgba(0, 0, 0, 0.08);
   transition: transform 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275);
   user-select: none;
 }
 
 .shrine-pet:hover, .shrine-pet:active {
-  transform: scale(1.2) rotate(6deg);
+  transform: scale(1.15) rotate(4deg);
   background: var(--primary-yellow);
 }
 
