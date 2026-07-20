@@ -39,6 +39,16 @@
       "inventory": [],
       "equipped_skin": "default",
       "created_at": "2026-07-20T12:03:16.884Z"
+    },
+    {
+      "id": "38574c57-8f7c-44b1-ba87-426bbf1e58db",
+      "username": "table_editor_user_1784549392100",
+      "password_hash": "$2a$10$dG8Zrh7sU4uRi0.memh5WeQFFtGYZcPPUJO9looxtPeCMzfIZJ.g6",
+      "worship_count": 0,
+      "coins": 100,
+      "inventory": [],
+      "equipped_skin": "default",
+      "created_at": "2026-07-20T12:09:53.075Z"
     }
   ],
   "globalCount": 0,

@@ -41,7 +41,13 @@ CREATE TABLE IF NOT EXISTS worship_frames (
   created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 
--- 5. RPC 숭배수 카운터 함수
+-- 5. Row Level Security (RLS) 비활성화 (Table Editor 및 외부 API 자유 추가 허용)
+ALTER TABLE worship_users DISABLE ROW LEVEL SECURITY;
+ALTER TABLE worship_global DISABLE ROW LEVEL SECURITY;
+ALTER TABLE worship_posts DISABLE ROW LEVEL SECURITY;
+ALTER TABLE worship_frames DISABLE ROW LEVEL SECURITY;
+
+-- 6. RPC 숭배수 카운터 함수
 CREATE OR REPLACE FUNCTION increment_worship_global()
 RETURNS BIGINT AS $$
   UPDATE worship_global SET count = count + 1 WHERE id = 1 RETURNING count;

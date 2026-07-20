@@ -158,8 +158,8 @@ app.post('/api/auth/register', async (req, res) => {
       } catch (sbErr) {}
     }
 
-    // 3. 신규 유저 생성
-    const newUserId = Math.random().toString(36).substring(2, 11);
+    // 3. 신규 유저 생성 (crypto.randomUUID 사용으로 Supabase UUID 타입 완벽 호환)
+    const newUserId = (crypto.randomUUID ? crypto.randomUUID() : (Date.now() + '-' + Math.random().toString(36).substring(2, 9)));
     const newUser = {
       id: newUserId,
       username: trimmedUsername,
@@ -175,10 +175,10 @@ app.post('/api/auth/register', async (req, res) => {
     mockDb.users.push(newUser);
     saveLocalDb();
 
-    // 5. Supabase 테이블에 원격 저장 시도
+    // 5. Supabase worship_users 테이블에 원격 추가 시도
     if (supabase) {
       try {
-        const { error: sbInsertErr } = await supabase
+        const { data: sbData, error: sbInsertErr } = await supabase
           .from('worship_users')
           .insert([{
             id: newUserId,
@@ -188,24 +188,35 @@ app.post('/api/auth/register', async (req, res) => {
             coins: 100,
             inventory: [],
             equipped_skin: 'default'
-          }]);
-          
+          }])
+          .select()
+          .maybeSingle();
+
         if (sbInsertErr) {
-          // 테이블에 일부 컬럼이 없는 경우 최소 필수 컬럼으로 재시도
-          console.log('Supabase 필수 속성으로 가입 재시도:', sbInsertErr.message);
-          await supabase
+          console.warn('Supabase 1차 인서트 경고, ID 자동 채움 재시도:', sbInsertErr.message);
+          // Supabase Table Editor에서 ID 자동 생성을 사용할 경우 ID 제외 후 재시도
+          const { data: sbRetryData, error: sbRetryErr } = await supabase
             .from('worship_users')
             .insert([{
-              id: newUserId,
               username: trimmedUsername,
               password_hash: passwordHash,
               worship_count: 0
-            }]);
-        } else {
-          console.log('✅ Supabase worship_users 테이블에 신규 계정이 성공적으로 추가되었습니다:', trimmedUsername);
+            }])
+            .select()
+            .maybeSingle();
+
+          if (sbRetryData && sbRetryData.id) {
+            newUser.id = sbRetryData.id;
+            saveLocalDb();
+            console.log('✅ Supabase Table Editor worship_users에 유저가 성공적으로 추가되었습니다 (ID:', sbRetryData.id, ')');
+          } else if (sbRetryErr) {
+            console.error('Supabase 유저 추가 실패 상세:', sbRetryErr.message);
+          }
+        } else if (sbData) {
+          console.log('✅ Supabase Table Editor worship_users에 유저가 성공적으로 추가되었습니다 (ID:', sbData.id, ')');
         }
       } catch (sbInsertErr) {
-        console.warn('Supabase 유저 저장 처리 경고:', sbInsertErr.message || sbInsertErr);
+        console.warn('Supabase 유저 저장 예외:', sbInsertErr.message || sbInsertErr);
       }
     }
 
