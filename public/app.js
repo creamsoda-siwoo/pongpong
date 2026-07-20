@@ -978,6 +978,51 @@ window.resetTarotGame = function() {
   initTarot();
 };
 
+// --- 스킨 적용 ---
+function applyEquippedSkin(skinName) {
+  const worshipImg = document.getElementById('worshipImg');
+  if (!worshipImg) return;
+
+  // 기본 스킨이면 원래 이미지 복원
+  if (!skinName || skinName === 'default') {
+    worshipImg.src = 'pompompurin.png';
+    worshipImg.style.filter = '';
+    return;
+  }
+
+  // 스킨별 효과 적용
+  const skinEffects = {
+    'golden': 'drop-shadow(0 0 12px gold) brightness(1.15)',
+    'rainbow': 'drop-shadow(0 0 12px violet) hue-rotate(45deg) brightness(1.1)',
+    'neon': 'drop-shadow(0 0 16px cyan) saturate(1.5) brightness(1.2)',
+    'dark': 'drop-shadow(0 0 10px purple) brightness(0.85) contrast(1.2)',
+    'crystal': 'drop-shadow(0 0 14px white) brightness(1.3) saturate(0.8)'
+  };
+
+  worshipImg.style.filter = skinEffects[skinName] || '';
+}
+
+// --- 로그인 환영 효과음 ---
+function playFanfareSound() {
+  if (typeof state !== 'undefined' && state.soundEnabled === false) return;
+  try {
+    const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    const notes = [523.25, 659.25, 783.99, 1046.50]; // C5, E5, G5, C6
+    notes.forEach((freq, i) => {
+      const osc = audioCtx.createOscillator();
+      const gain = audioCtx.createGain();
+      osc.type = 'sine';
+      osc.frequency.value = freq;
+      gain.gain.setValueAtTime(0.15, audioCtx.currentTime + i * 0.12);
+      gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + i * 0.12 + 0.4);
+      osc.connect(gain);
+      gain.connect(audioCtx.destination);
+      osc.start(audioCtx.currentTime + i * 0.12);
+      osc.stop(audioCtx.currentTime + i * 0.12 + 0.4);
+    });
+  } catch (e) {}
+}
+
 // --- 인증 ---
 async function checkAuth() {
   try {
