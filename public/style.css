@@ -1711,6 +1711,12 @@ body.skin-sakura .aurora-glow {
     gap: 12px;
   }
 
+  /* 모바일 터치 피드백 강화 */
+  button, .btn, .piano-key, .memory-card, .smash-hole {
+    touch-action: manipulation;
+  }
+}
+
 /* FEVER 모드 바너 */
 .fever-banner {
   background: linear-gradient(90deg, #FF1744, #FF9100, #FFEA00, #00E676, #00E5FF, #D500F9);
