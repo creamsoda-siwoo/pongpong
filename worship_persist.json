@@ -1,5 +1,16 @@
 {
-  "users": [],
+  "users": [
+    {
+      "id": "4ux8wfdg7",
+      "username": "persist_user_1784548070209",
+      "password_hash": "$2a$10$e2OawhMkG1Cq1a1sPaR4qewRsgTWoW7Gf7SLXyJJD3p5q6tq9GaAC",
+      "worship_count": 0,
+      "coins": 100,
+      "inventory": [],
+      "equipped_skin": "default",
+      "created_at": "2026-07-20T11:47:51.266Z"
+    }
+  ],
   "globalCount": 0,
   "posts": [
     {
@@ -15,17 +26,6 @@
       "content": "퐁퐁복음 1장을 읽고 깊은 감명을 받았습니다. 아멘.",
       "image_data": null,
       "created_at": "2026-07-20T10:20:45.687Z"
-    }
-  ],
-  "frames": [
-    {
-      "id": 1784544649113,
-      "username": "audit_user_1784544647882",
-      "title": "감사한 푸린 신단",
-      "image_data": "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg==",
-      "frame_style": "frame-gold",
-      "reactions": 0,
-      "created_at": "2026-07-20T10:50:49.113Z"
     }
   ]
 }

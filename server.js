@@ -135,71 +135,86 @@ app.post('/api/auth/register', async (req, res) => {
   try {
     const passwordHash = await bcrypt.hash(password, 10);
 
-    if (isMockDb) {
-      const exists = mockDb.users.some(u => u.username.toLowerCase() === trimmedUsername.toLowerCase());
-      if (exists) {
-        return res.status(400).json({ error: '이미 존재하는 사용자 이름입니다.' });
-      }
+    // 1. 로컬 mockDb 중복 체크
+    mockDb.users = mockDb.users || [];
+    const existsInMock = mockDb.users.some(u => u.username.toLowerCase() === trimmedUsername.toLowerCase());
 
-      const newUser = {
-        id: Math.random().toString(36).substring(2, 11),
-        username: trimmedUsername,
-        password_hash: passwordHash,
-        worship_count: 0,
-        created_at: new Date().toISOString()
-      };
-      mockDb.users.push(newUser);
-      saveLocalDb();
-
-      // 회원가입 후 자동 로그인 처리 (JWT 쿠키 발급)
-      const token = jwt.sign({ id: newUser.id, username: newUser.username }, JWT_SECRET, { expiresIn: '30d' });
-      res.cookie('token', token, {
-        httpOnly: true,
-        path: '/',
-        sameSite: 'lax',
-        maxAge: 30 * 24 * 60 * 60 * 1000
-      });
-
-      return res.json({
-        success: true,
-        message: '회원가입 및 로그인이 완료되었습니다.',
-        user: { username: newUser.username, worship_count: 0 }
-      });
-    } else {
-      // Supabase 중복 체크 및 가입
-      const { data: existingUser } = await supabase
-        .from('worship_users')
-        .select('username')
-        .ilike('username', trimmedUsername)
-        .maybeSingle();
-
-      if (existingUser) {
-        return res.status(400).json({ error: '이미 존재하는 사용자 이름입니다.' });
-      }
-
-      const { data: newUser, error } = await supabase
-        .from('worship_users')
-        .insert([{ username: trimmedUsername, password_hash: passwordHash, worship_count: 0 }])
-        .select('id, username, worship_count')
-        .single();
-
-      if (error) throw error;
-
-      // 회원가입 후 자동 로그인 처리 (JWT 쿠키 발급)
-      const token = jwt.sign({ id: newUser.id, username: newUser.username }, JWT_SECRET, { expiresIn: '30d' });
-      res.cookie('token', token, {
-        httpOnly: true,
-        path: '/',
-        sameSite: 'lax',
-        maxAge: 30 * 24 * 60 * 60 * 1000
-      });
-
-      return res.json({
-        success: true,
-        message: '회원가입 및 로그인이 완료되었습니다.',
-        user: { username: newUser.username, worship_count: newUser.worship_count || 0 }
-      });
+    if (existsInMock) {
+      return res.status(400).json({ error: '이미 존재하는 사용자 이름입니다.' });
     }
+
+    // 2. Supabase DB 연결 시 수파베이스 중복 체크
+    if (!isMockDb && supabase) {
+      try {
+        const { data: existingUser } = await supabase
+          .from('worship_users')
+          .select('username')
+          .ilike('username', trimmedUsername)
+          .maybeSingle();
+
+        if (existingUser) {
+          return res.status(400).json({ error: '이미 존재하는 사용자 이름입니다.' });
+        }
+      } catch (sbErr) {}
+    }
+
+    // 3. 신규 유저 생성
+    const newUserId = Math.random().toString(36).substring(2, 11);
+    const newUser = {
+      id: newUserId,
+      username: trimmedUsername,
+      password_hash: passwordHash,
+      worship_count: 0,
+      coins: 100,
+      inventory: [],
+      equipped_skin: 'default',
+      created_at: new Date().toISOString()
+    };
+
+    // 4. 로컬 영구 DB 저장 보장 (Dual Persistence)
+    mockDb.users.push(newUser);
+    saveLocalDb();
+
+    // 5. Supabase에도 원격 저장 시도
+    if (!isMockDb && supabase) {
+      try {
+        await supabase
+          .from('worship_users')
+          .insert([{
+            id: newUserId,
+            username: trimmedUsername,
+            password_hash: passwordHash,
+            worship_count: 0,
+            coins: 100,
+            inventory: [],
+            equipped_skin: 'default'
+          }]);
+      } catch (sbInsertErr) {
+        console.warn('Supabase 유저 저장 경고 (로컬 영구 DB에는 정상 저장됨):', sbInsertErr.message || sbInsertErr);
+      }
+    }
+
+    // 6. JWT 쿠키 발급 및 자동 로그인
+    const token = jwt.sign({ id: newUser.id, username: newUser.username }, JWT_SECRET, { expiresIn: '30d' });
+    res.cookie('token', token, {
+      httpOnly: true,
+      path: '/',
+      sameSite: 'lax',
+      maxAge: 30 * 24 * 60 * 60 * 1000 // 30일
+    });
+
+    return res.json({
+      success: true,
+      message: '회원가입 및 로그인이 완료되었습니다.',
+      user: {
+        id: newUser.id,
+        username: newUser.username,
+        worship_count: 0,
+        coins: 100,
+        inventory: [],
+        equipped_skin: 'default'
+      }
+    });
   } catch (err) {
     console.error("REGISTER ERROR:", err);
     res.status(500).json({ error: '회원가입 중 오류가 발생했습니다.' });
