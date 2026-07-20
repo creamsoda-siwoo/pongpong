@@ -9,6 +9,16 @@
       "inventory": [],
       "equipped_skin": "default",
       "created_at": "2026-07-20T11:47:51.266Z"
+    },
+    {
+      "id": "f0frnlz98",
+      "username": "sb_user_1784548572324",
+      "password_hash": "$2a$10$J5P19W.f5ASB.7N.qVtIAurabu4kU4QxGxNH2iCZvRz0cV3CactVW",
+      "worship_count": 0,
+      "coins": 100,
+      "inventory": [],
+      "equipped_skin": "default",
+      "created_at": "2026-07-20T11:56:13.465Z"
     }
   ],
   "globalCount": 0,

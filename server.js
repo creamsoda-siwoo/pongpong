@@ -175,10 +175,10 @@ app.post('/api/auth/register', async (req, res) => {
     mockDb.users.push(newUser);
     saveLocalDb();
 
-    // 5. Supabase에도 원격 저장 시도
-    if (!isMockDb && supabase) {
+    // 5. Supabase 테이블에 원격 저장 시도
+    if (supabase) {
       try {
-        await supabase
+        const { error: sbInsertErr } = await supabase
           .from('worship_users')
           .insert([{
             id: newUserId,
@@ -189,8 +189,23 @@ app.post('/api/auth/register', async (req, res) => {
             inventory: [],
             equipped_skin: 'default'
           }]);
+          
+        if (sbInsertErr) {
+          // 테이블에 일부 컬럼이 없는 경우 최소 필수 컬럼으로 재시도
+          console.log('Supabase 필수 속성으로 가입 재시도:', sbInsertErr.message);
+          await supabase
+            .from('worship_users')
+            .insert([{
+              id: newUserId,
+              username: trimmedUsername,
+              password_hash: passwordHash,
+              worship_count: 0
+            }]);
+        } else {
+          console.log('✅ Supabase worship_users 테이블에 신규 계정이 성공적으로 추가되었습니다:', trimmedUsername);
+        }
       } catch (sbInsertErr) {
-        console.warn('Supabase 유저 저장 경고 (로컬 영구 DB에는 정상 저장됨):', sbInsertErr.message || sbInsertErr);
+        console.warn('Supabase 유저 저장 처리 경고:', sbInsertErr.message || sbInsertErr);
       }
     }
 
