@@ -352,6 +352,23 @@ function updateShrineLevelProgress() {
   if (bar) bar.style.width = `${currentLevelXp}%`;
 }
 
+window.showToast = function(message) {
+  let toast = document.getElementById('toastNotification');
+  if (!toast) {
+    toast = document.createElement('div');
+    toast.id = 'toastNotification';
+    toast.className = 'toast-notification';
+    document.body.appendChild(toast);
+  }
+  toast.innerText = message;
+  toast.classList.add('show');
+  
+  clearTimeout(toast._timer);
+  toast._timer = setTimeout(() => {
+    toast.classList.remove('show');
+  }, 3000);
+};
+
 function unlockAchievement(id) {
   if (!unlockedAchievements.includes(id)) {
     unlockedAchievements.push(id);

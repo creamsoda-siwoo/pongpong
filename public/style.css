@@ -1905,3 +1905,28 @@ body.skin-sakura .aurora-glow {
   line-height: 1.6;
   font-family: 'Gowun Batang', serif;
 }
+
+/* 토스트 알림 메시지 스타일 */
+.toast-notification {
+  position: fixed;
+  bottom: 30px;
+  left: 50%;
+  transform: translateX(-50%) translateY(100px);
+  background: var(--dark-brown);
+  color: var(--cream-white);
+  padding: 12px 26px;
+  border-radius: 25px;
+  font-weight: 700;
+  font-size: 14px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3);
+  border: 1.5px solid var(--primary-yellow);
+  z-index: 99999;
+  opacity: 0;
+  pointer-events: none;
+  transition: all 0.35s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+.toast-notification.show {
+  transform: translateX(-50%) translateY(0);
+  opacity: 1;
+}
