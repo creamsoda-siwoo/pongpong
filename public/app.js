@@ -2117,15 +2117,29 @@ window.handleSendAiMessage = function(e) {
   playChimeSound(1.1);
 
   setTimeout(() => {
-    const aiResponses = [
-      `🍮 "퐁퐁! ${msg}에 대해 퐁퐁복음 제 1장을 묵상해보세요. 들판의 푸딩도 흔들리지만 마음엔 평화가 올 거랍니다!"`,
-      `🍮 "퐁퐁! 당신의 마음속 푸딩 수치는 무려 84점 이상이에요! 걱정 마시고 숭배 버튼을 눌러보세요!"`,
-      `🍮 "퐁퐁! 악당 퐁퐁푸틴의 시련이 오더라도 선한 순수함이 항상 승리한답니다. 힘내세요!"`,
-      `🍮 "퐁퐁! 오늘 퐁퐁 럭키 룰렛을 돌리면 놀라운 디저트 축복이 찾아올 거예요!"`,
-      `🍮 "퐁퐁! 동료들과 기쁨을 나누면 두 배가 되고 두려움은 반으로 줄어든답니다!"`
-    ];
+    let reply = '';
+    const lower = msg.toLowerCase();
 
-    const reply = aiResponses[Math.floor(Math.random() * aiResponses.length)];
+    if (lower.includes('안녕') || lower.includes('반가')) {
+      reply = `🍮 "퐁퐁! 안녕하세요! 퐁퐁푸린 성전에 오신 것을 온 마음 다해 환영합니다! 오늘 어떤 축복이 궁금하신가요?"`;
+    } else if (lower.includes('코인') || lower.includes('돈') || lower.includes('상점') || lower.includes('스킨')) {
+      reply = `🍮 "퐁퐁! 퐁퐁코인(PPC)은 숭배 연타, 일일 출석체크, 타워 쌓기, 포춘쿠키로 대량 모으실 수 있답니다! 모은 코인으로 상점에서 명품 스킨을 구매해보세요!"`;
+    } else if (lower.includes('게임') || lower.includes('미니게임') || lower.includes('타워') || lower.includes('슬롯') || lower.includes('쿠키')) {
+      reply = `🍮 "퐁퐁! 6가지 미니게임(푸딩캐치, 짝맞추기, 퐁퐁푸틴 퇴치, 럭키슬롯, 타워쌓기, 베이커리)을 즐기면 코인과 업적 보너스를 듬뿍 드린답니다!"`;
+    } else if (lower.includes('복음') || lower.includes('퀴즈') || lower.includes('지혜')) {
+      reply = `🍮 "퐁퐁! 퐁퐁복음 제 1장을 읽어보셨나요? '들판의 푸딩도 흔들리나니 네 마음이 흔들린들 어떠하리.' 성스러운 지혜 퀴즈에 도전해보세요!"`;
+    } else {
+      const aiResponses = [
+        `🍮 "퐁퐁! '${msg}'에 대해 퐁퐁복음 제 1장을 묵상해보세요. 들판의 푸딩도 흔들리지만 마음엔 평화가 올 거랍니다!"`,
+        `🍮 "퐁퐁! 당신의 마음속 푸딩 수치는 무려 84점 이상이에요! 걱정 마시고 숭배 버튼을 연타해보세요!"`,
+        `🍮 "퐁퐁! 악당 퐁퐁푸틴의 시련이 오더라도 선한 순수함이 항상 승리한답니다. 힘내세요!"`,
+        `🍮 "퐁퐁! 오늘 퐁퐁 럭키 룰렛을 돌리면 놀라운 디저트 축복이 찾아올 거예요!"`,
+        `🍮 "퐁퐁! 동료들과 기쁨을 나누면 두 배가 되고 두려움은 반으로 줄어든답니다!"`,
+        `🍮 "퐁퐁! 퐁퐁푸린의 보살핌 속에서 오늘 당신의 모든 꿈이 푸딩처럼 달콤하게 이뤄질 거예요!"`
+      ];
+      reply = aiResponses[Math.floor(Math.random() * aiResponses.length)];
+    }
+
     const aiMsgDiv = document.createElement('div');
     aiMsgDiv.className = 'ai-chat-msg purin';
     aiMsgDiv.innerHTML = reply;
@@ -2135,7 +2149,7 @@ window.handleSendAiMessage = function(e) {
     }
 
     playChimeSound(1.5);
-  }, 800);
+  }, 700);
 };
 
 // --- 🧠 퐁퐁복음 퀴즈 챌린지 ---
