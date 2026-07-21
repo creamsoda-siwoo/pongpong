@@ -133,6 +133,9 @@
         <button class="game-tab-btn" id="tabSlotGame" onclick="switchMiniGame('slot')">
           <i class="fa-solid fa-dice"></i> 4. 퐁퐁 럭키 슬롯
         </button>
+        <button class="game-tab-btn" id="tabTowerGame" onclick="switchMiniGame('tower')">
+          <i class="fa-solid fa-layer-group"></i> 5. 푸딩 타워 쌓기
+        </button>
       </div>
 
       <div class="minigame-container">
@@ -203,6 +206,22 @@
               <i class="fa-solid fa-play"></i> 슬롯머신 돌리기 (20 PPC)
             </button>
             <div id="slotResultText" class="slot-result-text"></div>
+          </div>
+        </div>
+
+        <!-- 게임 5: 푸딩 타워 쌓기 (Pudding Tower Stacker) -->
+        <div class="minigame-card" id="gameViewTower" style="display: none;">
+          <div class="minigame-stats">
+            <div><i class="fa-solid fa-layer-group"></i> 타워 높이: <strong id="towerHeight">0</strong>층</div>
+            <div><i class="fa-solid fa-coins"></i> 보너스: <strong id="towerCoins">0</strong> PPC</div>
+          </div>
+          <div class="tower-game-area" id="towerGameArea" style="position: relative; height: 320px; background: rgba(255, 255, 255, 0.25); border-radius: 16px; overflow: hidden; display: flex; flex-direction: column-reverse; align-items: center; padding-bottom: 10px;">
+            <div class="tower-base" style="width: 180px; height: 24px; background: var(--primary-yellow); border-radius: 8px; border: 2px solid var(--accent-brown); text-align: center; font-weight: 700; font-size: 13px; line-height: 20px;">🍮 성스러운 제단 받침대</div>
+          </div>
+          <div style="text-align: center; margin-top: 15px;">
+            <button class="btn btn-primary btn-lg" onclick="dropTowerPudding()" id="btnDropPudding">
+              <i class="fa-solid fa-hand-pointer"></i> 🍮 타이밍 맞추어 푸딩 쌓기!
+            </button>
           </div>
         </div>
       </div>

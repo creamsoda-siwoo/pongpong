@@ -568,30 +568,160 @@ window.switchMiniGame = function(gameType) {
   clearInterval(memoryTimerInterval);
   clearInterval(smashTimerInterval);
   clearInterval(smashPopInterval);
+  clearInterval(movingBlockInterval);
 
-  document.getElementById('tabCatchGame').classList.remove('active');
-  document.getElementById('tabMemoryGame').classList.remove('active');
-  document.getElementById('tabSmashGame').classList.remove('active');
-  document.getElementById('tabSlotGame').classList.remove('active');
+  const tCatch = document.getElementById('tabCatchGame');
+  const tMem = document.getElementById('tabMemoryGame');
+  const tSmash = document.getElementById('tabSmashGame');
+  const tSlot = document.getElementById('tabSlotGame');
+  const tTower = document.getElementById('tabTowerGame');
 
-  document.getElementById('gameViewCatch').style.display = 'none';
-  document.getElementById('gameViewMemory').style.display = 'none';
-  document.getElementById('gameViewSmash').style.display = 'none';
-  document.getElementById('gameViewSlot').style.display = 'none';
+  if (tCatch) tCatch.classList.remove('active');
+  if (tMem) tMem.classList.remove('active');
+  if (tSmash) tSmash.classList.remove('active');
+  if (tSlot) tSlot.classList.remove('active');
+  if (tTower) tTower.classList.remove('active');
+
+  const vCatch = document.getElementById('gameViewCatch');
+  const vMem = document.getElementById('gameViewMemory');
+  const vSmash = document.getElementById('gameViewSmash');
+  const vSlot = document.getElementById('gameViewSlot');
+  const vTower = document.getElementById('gameViewTower');
+
+  if (vCatch) vCatch.style.display = 'none';
+  if (vMem) vMem.style.display = 'none';
+  if (vSmash) vSmash.style.display = 'none';
+  if (vSlot) vSlot.style.display = 'none';
+  if (vTower) vTower.style.display = 'none';
 
   if (gameType === 'catch') {
-    document.getElementById('tabCatchGame').classList.add('active');
-    document.getElementById('gameViewCatch').style.display = 'block';
+    if (tCatch) tCatch.classList.add('active');
+    if (vCatch) vCatch.style.display = 'block';
   } else if (gameType === 'memory') {
-    document.getElementById('tabMemoryGame').classList.add('active');
-    document.getElementById('gameViewMemory').style.display = 'block';
+    if (tMem) tMem.classList.add('active');
+    if (vMem) vMem.style.display = 'block';
     startMemoryGame();
   } else if (gameType === 'smash') {
-    document.getElementById('tabSmashGame').classList.add('active');
-    document.getElementById('gameViewSmash').style.display = 'block';
+    if (tSmash) tSmash.classList.add('active');
+    if (vSmash) vSmash.style.display = 'block';
   } else if (gameType === 'slot') {
-    document.getElementById('tabSlotGame').classList.add('active');
-    document.getElementById('gameViewSlot').style.display = 'block';
+    if (tSlot) tSlot.classList.add('active');
+    if (vSlot) vSlot.style.display = 'block';
+  } else if (gameType === 'tower') {
+    if (tTower) tTower.classList.add('active');
+    if (vTower) vTower.style.display = 'block';
+    initTowerGame();
+  }
+};
+
+// --- 게임 5: 푸딩 타워 쌓기 (Pudding Tower Stacker) ---
+let towerLevel = 0;
+let towerTotalCoins = 0;
+let movingBlockDirection = 1;
+let movingBlockX = 0;
+let movingBlockInterval = null;
+let currentMovingBlockEl = null;
+
+function initTowerGame() {
+  towerLevel = 0;
+  towerTotalCoins = 0;
+  const hEl = document.getElementById('towerHeight');
+  const cEl = document.getElementById('towerCoins');
+  if (hEl) hEl.innerText = '0';
+  if (cEl) cEl.innerText = '0';
+
+  const area = document.getElementById('towerGameArea');
+  if (!area) return;
+  area.innerHTML = `<div class="tower-base" style="width: 180px; height: 24px; background: var(--primary-yellow); border-radius: 8px; border: 2px solid var(--accent-brown); text-align: center; font-weight: 700; font-size: 13px; line-height: 20px;">🍮 성스러운 제단 받침대</div>`;
+
+  spawnMovingTowerBlock();
+}
+
+function spawnMovingTowerBlock() {
+  clearInterval(movingBlockInterval);
+  const area = document.getElementById('towerGameArea');
+  if (!area) return;
+
+  currentMovingBlockEl = document.createElement('div');
+  currentMovingBlockEl.className = 'moving-pudding-block';
+  currentMovingBlockEl.innerHTML = '🍮';
+  currentMovingBlockEl.style.cssText = `
+    position: absolute;
+    top: 10px;
+    left: 0px;
+    width: 140px;
+    height: 32px;
+    background: linear-gradient(135deg, #FFF3B0 0%, #FFD700 100%);
+    border-radius: 10px;
+    border: 2px solid #8B4513;
+    text-align: center;
+    line-height: 28px;
+    font-size: 20px;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.15);
+    transition: left 0.02s linear;
+  `;
+  area.appendChild(currentMovingBlockEl);
+
+  movingBlockX = 0;
+  movingBlockDirection = 1;
+  const speed = Math.max(3, 12 - towerLevel);
+
+  movingBlockInterval = setInterval(() => {
+    movingBlockX += movingBlockDirection * speed;
+    if (movingBlockX >= 180) {
+      movingBlockX = 180;
+      movingBlockDirection = -1;
+    } else if (movingBlockX <= 0) {
+      movingBlockX = 0;
+      movingBlockDirection = 1;
+    }
+    if (currentMovingBlockEl) currentMovingBlockEl.style.left = `${movingBlockX}px`;
+  }, 20);
+}
+
+window.dropTowerPudding = function() {
+  if (!currentMovingBlockEl) return;
+  clearInterval(movingBlockInterval);
+
+  const offset = Math.abs(movingBlockX - 70);
+  if (offset < 65) {
+    towerLevel++;
+    const bonus = 10 + (towerLevel * 5);
+    towerTotalCoins += bonus;
+    state.userCoins = (state.userCoins || 0) + bonus;
+    const coinHeader = document.getElementById('headerUserCoins');
+    if (coinHeader) coinHeader.innerText = state.userCoins.toLocaleString();
+
+    const hEl = document.getElementById('towerHeight');
+    const cEl = document.getElementById('towerCoins');
+    if (hEl) hEl.innerText = towerLevel;
+    if (cEl) cEl.innerText = towerTotalCoins;
+
+    playChimeSound(1.2 + towerLevel * 0.05);
+
+    currentMovingBlockEl.style.position = 'relative';
+    currentMovingBlockEl.style.top = '0px';
+    currentMovingBlockEl.style.left = '0px';
+    currentMovingBlockEl.style.margin = '2px 0';
+
+    if (offset < 15) {
+      showToast(`🎯 저스트 타이밍! ${towerLevel}층 성공 (+${bonus} PPC)`);
+    } else {
+      showToast(`🍮 ${towerLevel}층 타워 착지 성공! (+${bonus} PPC)`);
+    }
+
+    if (towerLevel >= 10) unlockAchievement('tower_master');
+    setTimeout(() => { spawnMovingTowerBlock(); }, 500);
+  } else {
+    playChimeSound(0.7);
+    if (currentMovingBlockEl) {
+      currentMovingBlockEl.style.transform = 'translateY(100px) rotate(45deg)';
+      currentMovingBlockEl.style.opacity = '0';
+      currentMovingBlockEl.style.transition = 'all 0.5s ease-out';
+      setTimeout(() => { currentMovingBlockEl.remove(); }, 500);
+    }
+    showToast(`💥 푸딩 타워가 무너졌습니다! 최종: ${towerLevel}층 (${towerTotalCoins} PPC 획득)`);
+    setTimeout(() => { initTowerGame(); }, 1200);
   }
 };
 
