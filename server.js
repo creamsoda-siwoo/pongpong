@@ -86,30 +86,34 @@ const authenticateToken = async (req, res, next) => {
   try {
     const verified = jwt.verify(token, JWT_SECRET);
     
-    // DB에서 최신 유저 정보 확인
-    if (isMockDb) {
-      const user = mockDb.users.find(u => (verified.id && u.id === verified.id) || u.username.toLowerCase() === (verified.username || '').toLowerCase());
-      if (user) {
-        req.user = { id: user.id, username: user.username };
-      } else {
-        req.user = null;
-      }
+    // 1단계: 로컬 DB에서 먼저 유저 확인
+    let foundUser = null;
+    if (mockDb && mockDb.users) {
+      foundUser = mockDb.users.find(u =>
+        (verified.id && u.id === verified.id) ||
+        (verified.username && u.username.toLowerCase() === verified.username.toLowerCase())
+      );
+    }
+
+    // 2단계: 로컬에 없으면 Supabase 확인
+    if (!foundUser && supabase) {
+      try {
+        const { data } = await supabase
+          .from('worship_users')
+          .select('id, username')
+          .ilike('username', verified.username || '')
+          .maybeSingle();
+        if (data) foundUser = data;
+      } catch (sbErr) {}
+    }
+
+    // 3단계: 어디서든 찾았으면 설정, 못 찾았으면 JWT 페이로드 신뢰
+    if (foundUser) {
+      req.user = { id: foundUser.id, username: foundUser.username };
+    } else if (verified.id && verified.username) {
+      req.user = { id: verified.id, username: verified.username };
     } else {
-      let query;
-      if (verified.id) {
-        query = supabase.from('worship_users').select('id, username').eq('id', verified.id);
-      } else {
-        query = supabase.from('worship_users').select('id, username').ilike('username', verified.username);
-      }
-      const { data, error } = await query.maybeSingle();
-      
-      if (data && !error) {
-        req.user = { id: data.id, username: data.username };
-      } else if (verified.id && verified.username) {
-        req.user = { id: verified.id, username: verified.username };
-      } else {
-        req.user = null;
-      }
+      req.user = null;
     }
   } catch (err) {
     req.user = null;
@@ -259,26 +263,40 @@ app.post('/api/auth/login', async (req, res) => {
   try {
     let user = null;
 
-    if (isMockDb) {
+    // 1단계: 로컬 DB에서 먼저 검색 (password_hash 보장)
+    if (mockDb && mockDb.users) {
       user = mockDb.users.find(u => u.username.toLowerCase() === trimmedUsername.toLowerCase());
-    } else {
+    }
+
+    // 2단계: 로컬에 없으면 Supabase에서 검색
+    if (!user && supabase) {
       try {
         const { data, error } = await supabase
           .from('worship_users')
           .select('*')
           .ilike('username', trimmedUsername)
           .maybeSingle();
-        if (!error && data) user = data;
-      } catch (sbErr) {}
-
-      // Supabase 조회 실패 시 local mockDb Fallback 검색
-      if (!user && mockDb && mockDb.users) {
-        user = mockDb.users.find(u => u.username.toLowerCase() === trimmedUsername.toLowerCase());
+        if (!error && data) {
+          user = data;
+          // Supabase에서 찾은 유저를 로컬 DB에도 캐싱
+          if (mockDb && mockDb.users && !mockDb.users.find(u => u.username.toLowerCase() === trimmedUsername.toLowerCase())) {
+            mockDb.users.push(data);
+            saveLocalDb();
+          }
+        }
+      } catch (sbErr) {
+        console.warn('Supabase 로그인 조회 경고:', sbErr.message);
       }
     }
 
     if (!user) {
+      console.log('LOGIN FAIL: 유저를 찾을 수 없음 -', trimmedUsername);
       return res.status(400).json({ error: '사용자 이름 또는 비밀번호가 올바르지 않습니다.' });
+    }
+
+    if (!user.password_hash) {
+      console.error('LOGIN FAIL: password_hash가 null -', trimmedUsername);
+      return res.status(400).json({ error: '계정 정보에 문제가 있습니다. 다시 가입해주세요.' });
     }
 
     const validPassword = await bcrypt.compare(password, user.password_hash);
@@ -295,6 +313,8 @@ app.post('/api/auth/login', async (req, res) => {
       maxAge: 30 * 24 * 60 * 60 * 1000 // 30일
     });
 
+    console.log('✅ LOGIN SUCCESS:', user.username);
+
     res.json({
       success: true,
       user: {
@@ -308,7 +328,7 @@ app.post('/api/auth/login', async (req, res) => {
     });
   } catch (err) {
     console.error("LOGIN ERROR:", err);
-    res.status(500).json({ error: '로그인 중 오류가 발생했습니다.', details: err.message || err });
+    res.status(500).json({ error: '로그인 중 오류가 발생했습니다.' });
   }
 });
 
