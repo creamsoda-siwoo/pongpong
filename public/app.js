@@ -2305,3 +2305,78 @@ window.crackFortuneCookie = function() {
   playFanfareSound();
   showToast('🥠 포춘 쿠키 해금! +30 PPC 획득!');
 };
+
+// --- 일일 출석체크 기능 ---
+window.claimDailyAttendance = async function() {
+  if (!state.isLoggedIn) {
+    if (window.showToast) showToast('로그인 후 출석체크가 가능합니다.');
+    else alert('로그인 후 출석체크가 가능합니다.');
+    return;
+  }
+
+  try {
+    const res = await fetch('/api/attendance/claim', { method: 'POST' });
+    const data = await res.json();
+
+    if (res.ok && data.success) {
+      if (data.coins !== undefined) {
+        state.userCoins = parseInt(data.coins);
+        const coinEl = document.getElementById('headerUserCoins');
+        if (coinEl) coinEl.innerText = state.userCoins.toLocaleString();
+      }
+      if (data.worship_count !== undefined && el.userWorshipCount) {
+        state.userWorshipCount = parseInt(data.worship_count);
+        el.userWorshipCount.innerText = state.userWorshipCount.toLocaleString();
+        updateUserRankBadge(state.userWorshipCount);
+      }
+      playFanfareSound();
+      if (window.showToast) showToast(`📅 ${data.message || '출석체크 완료! +150 퐁퐁코인'}`);
+    } else {
+      if (window.showToast) showToast(data.error || '오늘 이미 출석체크를 완료하셨습니다!');
+      else alert(data.error || '오늘 이미 출석체크를 완료하셨습니다!');
+    }
+  } catch (err) {
+    console.error(err);
+    if (window.showToast) showToast('출석체크 처리 중 오류가 발생했습니다.');
+  }
+};
+
+// --- 보관함 스킨 목록 렌더링 ---
+window.renderInventoryList = function() {
+  const container = document.getElementById('inventoryList');
+  if (!container) return;
+
+  if (!state.inventory || state.inventory.length === 0) {
+    container.innerHTML = `<div class="empty-inventory" style="text-align:center; padding:20px; color:var(--text-muted);">보유 중인 아이템이 없습니다. 상점에서 스킨을 구매해보세요! 🍮</div>`;
+    return;
+  }
+
+  const skinNames = {
+    'golden': '✨ 황금 퐁퐁푸린 스킨',
+    'rainbow': '🌈 무지개 빛 퐁퐁푸린 스킨',
+    'neon': '⚡ 네온 신디케이트 스킨',
+    'dark': '🌙 다크 나이트 퐁퐁푸린',
+    'crystal': '💎 크리스탈 세인트 스킨'
+  };
+
+  container.innerHTML = state.inventory.map(item => {
+    const isEquipped = state.equippedSkin === item;
+    const name = skinNames[item] || item;
+    return `
+      <div class="inventory-item ${isEquipped ? 'equipped' : ''}" style="display:flex; justify-space-between; align-items:center; background:var(--card-bg); padding:10px 14px; margin-bottom:8px; border-radius:12px; border:1px solid var(--glass-border);">
+        <div class="item-name" style="font-weight:700;">${name}</div>
+        <button class="btn btn-sm ${isEquipped ? 'btn-secondary' : 'btn-primary'}" onclick="equipSkin('${item}')">
+          ${isEquipped ? '장착 중' : '장착하기'}
+        </button>
+      </div>
+    `;
+  }).join('');
+};
+
+// --- 스킨 장착 ---
+window.equipSkin = function(skinName) {
+  state.equippedSkin = skinName;
+  applyEquippedSkin(skinName);
+  renderInventoryList();
+  if (window.showToast) showToast(`✨ ${skinName} 스킨이 장착되었습니다!`);
+};
