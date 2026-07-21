@@ -575,24 +575,28 @@ window.switchMiniGame = function(gameType) {
   const tSmash = document.getElementById('tabSmashGame');
   const tSlot = document.getElementById('tabSlotGame');
   const tTower = document.getElementById('tabTowerGame');
+  const tBake = document.getElementById('tabBakeGame');
 
   if (tCatch) tCatch.classList.remove('active');
   if (tMem) tMem.classList.remove('active');
   if (tSmash) tSmash.classList.remove('active');
   if (tSlot) tSlot.classList.remove('active');
   if (tTower) tTower.classList.remove('active');
+  if (tBake) tBake.classList.remove('active');
 
   const vCatch = document.getElementById('gameViewCatch');
   const vMem = document.getElementById('gameViewMemory');
   const vSmash = document.getElementById('gameViewSmash');
   const vSlot = document.getElementById('gameViewSlot');
   const vTower = document.getElementById('gameViewTower');
+  const vBake = document.getElementById('gameViewBake');
 
   if (vCatch) vCatch.style.display = 'none';
   if (vMem) vMem.style.display = 'none';
   if (vSmash) vSmash.style.display = 'none';
   if (vSlot) vSlot.style.display = 'none';
   if (vTower) vTower.style.display = 'none';
+  if (vBake) vBake.style.display = 'none';
 
   if (gameType === 'catch') {
     if (tCatch) tCatch.classList.add('active');
@@ -611,7 +615,64 @@ window.switchMiniGame = function(gameType) {
     if (tTower) tTower.classList.add('active');
     if (vTower) vTower.style.display = 'block';
     initTowerGame();
+  } else if (gameType === 'bake') {
+    if (tBake) tBake.classList.add('active');
+    if (vBake) vBake.style.display = 'block';
   }
+};
+
+// --- 게임 6: 푸딩 베이커리 (Pudding Bakery) ---
+let totalBakedCount = 0;
+let totalBakedCoins = 0;
+let isBakingInOven = false;
+
+window.bakePuddingCookie = function() {
+  if (isBakingInOven) return;
+  if ((state.userCoins || 0) < 10) {
+    if (window.showToast) showToast('베이커리 오븐 가동을 위해 최소 10 PPC가 필요합니다.');
+    else alert('베이커리 오븐 가동을 위해 최소 10 PPC가 필요합니다.');
+    return;
+  }
+
+  state.userCoins -= 10;
+  const coinEl = document.getElementById('headerUserCoins');
+  if (coinEl) coinEl.innerText = state.userCoins.toLocaleString();
+
+  isBakingInOven = true;
+  playChimeSound(1.1);
+
+  const graphicEl = document.getElementById('ovenGraphic');
+  const textEl = document.getElementById('ovenStatusText');
+  const countEl = document.getElementById('bakedCount');
+  const profitEl = document.getElementById('bakedCoins');
+
+  if (graphicEl) graphicEl.style.transform = 'scale(1.2) rotate(10deg)';
+  if (textEl) textEl.innerText = '🔥 오븐 열기 가열 중... 퐁퐁푸린 쿠키가 맛있게 구워지는 중!';
+
+  setTimeout(() => {
+    isBakingInOven = false;
+    if (graphicEl) graphicEl.style.transform = 'scale(1)';
+
+    const lootTable = [
+      { name: '🍪 바삭한 일반 퐁퐁 쿠키', profit: 25, icon: '🍪' },
+      { name: '🍮 달콤 커스터드 푸딩 빵', profit: 45, icon: '🍮' },
+      { name: '🎂 성스러운 3단 자이언트 케이크', profit: 100, icon: '🎂' },
+      { name: '👑 황금 왕관 푸딩 쿠키', profit: 250, icon: '👑' }
+    ];
+
+    const rolled = lootTable[Math.floor(Math.random() * lootTable.length)];
+    totalBakedCount++;
+    totalBakedCoins += rolled.profit;
+
+    state.userCoins += rolled.profit;
+    if (coinEl) coinEl.innerText = state.userCoins.toLocaleString();
+    if (countEl) countEl.innerText = totalBakedCount;
+    if (profitEl) profitEl.innerText = totalBakedCoins;
+
+    playFanfareSound();
+    if (textEl) textEl.innerText = `🎉 구이 성공! [${rolled.icon} ${rolled.name}] 완성! (+${rolled.profit} PPC 획득)`;
+    showToast(`🎉 [${rolled.icon} ${rolled.name}] 굽기 성공! (+${rolled.profit} PPC)`);
+  }, 1200);
 };
 
 // --- 게임 5: 푸딩 타워 쌓기 (Pudding Tower Stacker) ---
