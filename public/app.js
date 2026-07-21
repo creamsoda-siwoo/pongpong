@@ -561,7 +561,6 @@ window.copyCurrentChapter = function() {
 
 // --- 미니게임 전환 탭 ---
 window.switchMiniGame = function(gameType) {
-  // 이전 진행 중인 게임 타이머 정리
   gameActive = false;
   clearInterval(gameInterval);
   clearInterval(spawnInterval);
@@ -570,54 +569,123 @@ window.switchMiniGame = function(gameType) {
   clearInterval(smashPopInterval);
   clearInterval(movingBlockInterval);
 
-  const tCatch = document.getElementById('tabCatchGame');
-  const tMem = document.getElementById('tabMemoryGame');
-  const tSmash = document.getElementById('tabSmashGame');
-  const tSlot = document.getElementById('tabSlotGame');
-  const tTower = document.getElementById('tabTowerGame');
-  const tBake = document.getElementById('tabBakeGame');
+  const tabs = ['tabCatchGame','tabMemoryGame','tabSmashGame','tabSlotGame','tabTowerGame','tabBakeGame','tabSeqGame'];
+  const views = ['gameViewCatch','gameViewMemory','gameViewSmash','gameViewSlot','gameViewTower','gameViewBake','gameViewSeq'];
+  tabs.forEach(id => { const el = document.getElementById(id); if (el) el.classList.remove('active'); });
+  views.forEach(id => { const el = document.getElementById(id); if (el) el.style.display = 'none'; });
 
-  if (tCatch) tCatch.classList.remove('active');
-  if (tMem) tMem.classList.remove('active');
-  if (tSmash) tSmash.classList.remove('active');
-  if (tSlot) tSlot.classList.remove('active');
-  if (tTower) tTower.classList.remove('active');
-  if (tBake) tBake.classList.remove('active');
+  const tabMap = { catch:'tabCatchGame', memory:'tabMemoryGame', smash:'tabSmashGame', slot:'tabSlotGame', tower:'tabTowerGame', bake:'tabBakeGame', seq:'tabSeqGame' };
+  const viewMap = { catch:'gameViewCatch', memory:'gameViewMemory', smash:'gameViewSmash', slot:'gameViewSlot', tower:'gameViewTower', bake:'gameViewBake', seq:'gameViewSeq' };
 
-  const vCatch = document.getElementById('gameViewCatch');
-  const vMem = document.getElementById('gameViewMemory');
-  const vSmash = document.getElementById('gameViewSmash');
-  const vSlot = document.getElementById('gameViewSlot');
-  const vTower = document.getElementById('gameViewTower');
-  const vBake = document.getElementById('gameViewBake');
+  const tEl = document.getElementById(tabMap[gameType]);
+  const vEl = document.getElementById(viewMap[gameType]);
+  if (tEl) tEl.classList.add('active');
+  if (vEl) vEl.style.display = 'block';
 
-  if (vCatch) vCatch.style.display = 'none';
-  if (vMem) vMem.style.display = 'none';
-  if (vSmash) vSmash.style.display = 'none';
-  if (vSlot) vSlot.style.display = 'none';
-  if (vTower) vTower.style.display = 'none';
-  if (vBake) vBake.style.display = 'none';
+  if (gameType === 'memory') startMemoryGame();
+  if (gameType === 'tower') initTowerGame();
+  if (gameType === 'seq') initSeqGame();
+};
 
-  if (gameType === 'catch') {
-    if (tCatch) tCatch.classList.add('active');
-    if (vCatch) vCatch.style.display = 'block';
-  } else if (gameType === 'memory') {
-    if (tMem) tMem.classList.add('active');
-    if (vMem) vMem.style.display = 'block';
-    startMemoryGame();
-  } else if (gameType === 'smash') {
-    if (tSmash) tSmash.classList.add('active');
-    if (vSmash) vSmash.style.display = 'block';
-  } else if (gameType === 'slot') {
-    if (tSlot) tSlot.classList.add('active');
-    if (vSlot) vSlot.style.display = 'block';
-  } else if (gameType === 'tower') {
-    if (tTower) tTower.classList.add('active');
-    if (vTower) vTower.style.display = 'block';
-    initTowerGame();
-  } else if (gameType === 'bake') {
-    if (tBake) tBake.classList.add('active');
-    if (vBake) vBake.style.display = 'block';
+// --- 게임 7: 퐁퐁 기억력 시퀀스 챌린지 ---
+let seqSequence = [];
+let seqPlayerIdx = 0;
+let seqCurrentRound = 0;
+let seqTotalCoins = 0;
+let seqAcceptingInput = false;
+const SEQ_PADS = ['seqPad0','seqPad1','seqPad2','seqPad3'];
+
+function initSeqGame() {
+  seqSequence = [];
+  seqPlayerIdx = 0;
+  seqCurrentRound = 0;
+  seqTotalCoins = 0;
+  seqAcceptingInput = false;
+  const rEl = document.getElementById('seqRound');
+  const cEl = document.getElementById('seqCoins');
+  const sEl = document.getElementById('seqStatusText');
+  const btn = document.getElementById('btnStartSeq');
+  if (rEl) rEl.innerText = '1';
+  if (cEl) cEl.innerText = '0';
+  if (sEl) sEl.innerText = '시작 버튼을 눌러 퐁퐁 기억력 챌린지를 시작하세요!';
+  if (btn) btn.style.display = 'inline-block';
+}
+
+window.startSeqGame = function() {
+  const btn = document.getElementById('btnStartSeq');
+  if (btn) btn.style.display = 'none';
+  seqSequence = [];
+  seqCurrentRound = 0;
+  seqTotalCoins = 0;
+  seqNextRound();
+};
+
+function seqNextRound() {
+  seqAcceptingInput = false;
+  seqPlayerIdx = 0;
+  seqCurrentRound++;
+  seqSequence.push(Math.floor(Math.random() * 4));
+
+  const rEl = document.getElementById('seqRound');
+  const sEl = document.getElementById('seqStatusText');
+  if (rEl) rEl.innerText = seqCurrentRound;
+  if (sEl) sEl.innerText = '🍮 잘 보세요! 순서를 기억하세요...';
+
+  let delay = 600;
+  seqSequence.forEach((padIdx, i) => {
+    setTimeout(() => {
+      seqFlashPad(padIdx);
+    }, delay + i * 700);
+  });
+
+  setTimeout(() => {
+    seqAcceptingInput = true;
+    if (sEl) sEl.innerText = '🎯 이제 순서대로 눌러보세요!';
+  }, delay + seqSequence.length * 700 + 300);
+}
+
+function seqFlashPad(idx) {
+  const pad = document.getElementById(SEQ_PADS[idx]);
+  if (!pad) return;
+  pad.classList.add('seq-active');
+  playChimeSound(1.0 + idx * 0.15);
+  setTimeout(() => { pad.classList.remove('seq-active'); }, 400);
+}
+
+window.seqPlayerPress = function(idx) {
+  if (!seqAcceptingInput) return;
+  seqFlashPad(idx);
+
+  if (idx === seqSequence[seqPlayerIdx]) {
+    seqPlayerIdx++;
+    if (seqPlayerIdx >= seqSequence.length) {
+      // 라운드 성공!
+      seqAcceptingInput = false;
+      const bonus = seqCurrentRound * 15;
+      seqTotalCoins += bonus;
+      state.userCoins = (state.userCoins || 0) + bonus;
+      const coinH = document.getElementById('headerUserCoins');
+      if (coinH) coinH.innerText = state.userCoins.toLocaleString();
+      const cEl = document.getElementById('seqCoins');
+      if (cEl) cEl.innerText = seqTotalCoins;
+      const sEl = document.getElementById('seqStatusText');
+      if (sEl) sEl.innerText = `✅ 라운드 ${seqCurrentRound} 성공! +${bonus} PPC 획득!`;
+      playFanfareSound();
+      showToast(`🧠 라운드 ${seqCurrentRound} 기억력 성공! +${bonus} PPC`);
+      setTimeout(() => { seqNextRound(); }, 1200);
+    }
+  } else {
+    // 실패!
+    seqAcceptingInput = false;
+    const failPad = document.getElementById(SEQ_PADS[idx]);
+    if (failPad) failPad.classList.add('seq-wrong');
+    setTimeout(() => { if (failPad) failPad.classList.remove('seq-wrong'); }, 500);
+    playChimeSound(0.6);
+    const sEl = document.getElementById('seqStatusText');
+    if (sEl) sEl.innerText = `💥 틀렸습니다! 최종 ${seqCurrentRound - 1}라운드 클리어 (총 ${seqTotalCoins} PPC 획득)`;
+    showToast(`💥 기억력 실패! 총 ${seqCurrentRound - 1}라운드 클리어`);
+    const btn = document.getElementById('btnStartSeq');
+    setTimeout(() => { initSeqGame(); if (btn) btn.style.display = 'inline-block'; }, 1500);
   }
 };
 
@@ -2585,3 +2653,65 @@ window.equipSkin = function(skinName) {
   renderInventoryList();
   if (window.showToast) showToast(`✨ ${skinName} 스킨이 장착되었습니다!`);
 };
+
+// ===== 🎯 오늘의 도전 과제 추적기 =====
+const dailyChallenges = {
+  ch1: { done: false, petCount: 0, bakedOnce: false, feverDone: false },
+};
+
+function markChallenge(id) {
+  const statusEl = document.getElementById(`${id}Status`);
+  const itemEl = document.getElementById(id);
+  if (!statusEl || !itemEl) return;
+  if (itemEl.classList.contains('done')) return; // 이미 완료
+
+  itemEl.classList.add('done');
+  statusEl.classList.add('complete');
+  statusEl.innerText = '✅ 완료';
+
+  const rewardMap = { ch1: 10, ch2: 50, ch3: 30, ch4: 40 };
+  const bonus = rewardMap[id] || 10;
+  state.userCoins = (state.userCoins || 0) + bonus;
+  const coinEl = document.getElementById('headerUserCoins');
+  if (coinEl) coinEl.innerText = state.userCoins.toLocaleString();
+
+  playChimeSound(1.4);
+  showToast(`🎯 도전 과제 완료! +${bonus} PPC 보너스 지급!`);
+}
+
+// ch1: 첫 숭배 완료 트리거 (worship 후 호출)
+function challengeOnFirstWorship() {
+  markChallenge('ch1');
+}
+
+// ch2: 피버 모드 발동 트리거
+function challengeOnFever() {
+  markChallenge('ch2');
+}
+
+// ch3: 펫 터치 카운터
+let challengePetCount = 0;
+function challengeOnPetInteract() {
+  challengePetCount++;
+  if (challengePetCount >= 3) {
+    markChallenge('ch3');
+  }
+}
+
+// ch4: 베이커리 굽기 완료 트리거
+function challengeOnBake() {
+  markChallenge('ch4');
+}
+
+// === 시즌 이벤트: 숭배 100회 도달 시 +500 PPC 보너스 ===
+let seasonEventWorshipBonus100Claimed = false;
+function checkSeasonEvent100() {
+  if (!seasonEventWorshipBonus100Claimed && state.userWorshipCount >= 100) {
+    seasonEventWorshipBonus100Claimed = true;
+    state.userCoins = (state.userCoins || 0) + 500;
+    const coinEl = document.getElementById('headerUserCoins');
+    if (coinEl) coinEl.innerText = state.userCoins.toLocaleString();
+    playFanfareSound();
+    showToast('🌸🎁 여름 이벤트 달성! 황금 푸딩 +500 PPC 지급!');
+  }
+}

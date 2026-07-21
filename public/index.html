@@ -59,6 +59,11 @@
     </div>
   </header>
 
+  <!-- 🌸 시즌 이벤트 배너 -->
+  <div class="event-banner-strip" id="eventBannerStrip">
+    <span class="event-banner-inner">🍮 ✨ <strong>여름 한정 성전 이벤트</strong> 개최 중 — 오늘 숭배 100회 달성 시 🎁 <strong>황금 푸딩 코인 +500 PPC</strong> 보너스 지급! &nbsp;&nbsp;|&nbsp;&nbsp; 🐾 펫 친구들과 10회 이상 교감하면 시즌 전용 칭호 획득! &nbsp;&nbsp;|&nbsp;&nbsp; 🎡 럭키 룰렛 매일 돌리기 잊지 마세요! ✨ 🍮</span>
+  </div>
+
   <main>
     <!-- 1. 메인 홈 / 숭배 섹션 -->
     <section id="home" class="hero-section">
@@ -109,6 +114,49 @@
             <p class="login-prompt-text" id="loginPrompt">로그인 시 개별 집계 및 칭호 획득이 시작됩니다</p>
           </div>
         </div>
+
+        <!-- 🎯 오늘의 성스러운 도전 과제 -->
+        <div class="daily-challenges-card">
+          <div class="daily-challenges-title"><i class="fa-solid fa-star"></i> 오늘의 성스러운 도전 과제</div>
+          <div class="daily-challenges-list">
+            <div class="challenge-item" id="ch1">
+              <span class="ch-icon">🙏</span>
+              <div class="ch-info">
+                <div class="ch-name">신성한 첫 숭배</div>
+                <div class="ch-desc">오늘 처음 숭배하기</div>
+              </div>
+              <div class="ch-reward">+10 PPC</div>
+              <div class="ch-status" id="ch1Status">미완료</div>
+            </div>
+            <div class="challenge-item" id="ch2">
+              <span class="ch-icon">🔥</span>
+              <div class="ch-info">
+                <div class="ch-name">피버 광신도</div>
+                <div class="ch-desc">피버 모드 1회 발동하기</div>
+              </div>
+              <div class="ch-reward">+50 PPC</div>
+              <div class="ch-status" id="ch2Status">미완료</div>
+            </div>
+            <div class="challenge-item" id="ch3">
+              <span class="ch-icon">🐾</span>
+              <div class="ch-info">
+                <div class="ch-name">펫 친구 관리</div>
+                <div class="ch-desc">펫 3마리 이상 터치하기</div>
+              </div>
+              <div class="ch-reward">+30 PPC</div>
+              <div class="ch-status" id="ch3Status">미완료</div>
+            </div>
+            <div class="challenge-item" id="ch4">
+              <span class="ch-icon">🍪</span>
+              <div class="ch-info">
+                <div class="ch-name">베이커리 견습생</div>
+                <div class="ch-desc">오늘 베이커리 쿠키 1개 굽기</div>
+              </div>
+              <div class="ch-reward">+40 PPC</div>
+              <div class="ch-status" id="ch4Status">미완료</div>
+            </div>
+          </div>
+        </div>
       </div>
     </section>
 
@@ -138,6 +186,9 @@
         </button>
         <button class="game-tab-btn" id="tabBakeGame" onclick="switchMiniGame('bake')">
           <i class="fa-solid fa-fire-burner"></i> 6. 푸딩 베이커리
+        </button>
+        <button class="game-tab-btn" id="tabSeqGame" onclick="switchMiniGame('seq')">
+          <i class="fa-solid fa-brain"></i> 7. 기억력 챌린지
         </button>
       </div>
 
@@ -221,10 +272,14 @@
           <div class="tower-game-area" id="towerGameArea" style="position: relative; height: 320px; background: rgba(255, 255, 255, 0.25); border-radius: 16px; overflow: hidden; display: flex; flex-direction: column-reverse; align-items: center; padding-bottom: 10px;">
             <div class="tower-base" style="width: 180px; height: 24px; background: var(--primary-yellow); border-radius: 8px; border: 2px solid var(--accent-brown); text-align: center; font-weight: 700; font-size: 13px; line-height: 20px;">🍮 성스러운 제단 받침대</div>
           </div>
+          </div>
           <div style="text-align: center; margin-top: 15px;">
             <button class="btn btn-primary btn-lg" onclick="dropTowerPudding()" id="btnDropPudding">
               <i class="fa-solid fa-hand-pointer"></i> 🍮 타이밍 맞추어 푸딩 쌓기!
             </button>
+          </div>
+        </div>
+
         <!-- 게임 6: 푸딩 베이커리 (Pudding Bakery) -->
         <div class="minigame-card" id="gameViewBake" style="display: none;">
           <div class="minigame-stats">
@@ -236,6 +291,26 @@
             <p id="ovenStatusText" style="font-weight: 700; font-size: 15px; margin-bottom: 15px;">재료(우유, 설탕, 커스터드)를 섞어 황금 푸딩 쿠키를 구워보세요!</p>
             <button class="btn btn-primary btn-lg" onclick="bakePuddingCookie()" id="btnBakeCookie">
               <i class="fa-solid fa-fire-burner"></i> 🍮 오븐 가동하여 쿠키 굽기 (10 PPC)
+            </button>
+          </div>
+        </div>
+
+        <!-- 게임 7: 퐁퐁 기억력 시퀀스 챌린지 -->
+        <div class="minigame-card" id="gameViewSeq" style="display: none;">
+          <div class="minigame-stats">
+            <div><i class="fa-solid fa-brain"></i> 라운드: <strong id="seqRound">1</strong></div>
+            <div><i class="fa-solid fa-coins"></i> 기억력 보상: <strong id="seqCoins">0</strong> PPC</div>
+          </div>
+          <div style="text-align: center; padding: 20px 10px;">
+            <p id="seqStatusText" style="font-weight: 700; font-size: 15px; margin-bottom: 15px; min-height: 24px;">시작 버튼을 눌러 퐁퐁 기억력 챌린지를 시작하세요!</p>
+            <div class="seq-pad-grid" id="seqPadGrid">
+              <button class="seq-pad" id="seqPad0" onclick="seqPlayerPress(0)">🍮</button>
+              <button class="seq-pad" id="seqPad1" onclick="seqPlayerPress(1)">🧁</button>
+              <button class="seq-pad" id="seqPad2" onclick="seqPlayerPress(2)">🍩</button>
+              <button class="seq-pad" id="seqPad3" onclick="seqPlayerPress(3)">🎂</button>
+            </div>
+            <button class="btn btn-primary btn-lg" onclick="startSeqGame()" id="btnStartSeq" style="margin-top: 18px;">
+              <i class="fa-solid fa-play"></i> 기억력 게임 시작!
             </button>
           </div>
         </div>
