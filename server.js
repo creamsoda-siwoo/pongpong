@@ -15,6 +15,43 @@ app.use(express.urlencoded({ extended: true }));
 app.use(cookieParser());
 app.use(express.static(path.join(__dirname, 'public')));
 
+// --- 🛡️ 프로세스 다운 방지 예외 가드 ---
+process.on('uncaughtException', (err) => {
+  console.error('🛡️ [SERVER GUARD] Uncaught Exception:', err.message || err);
+});
+
+process.on('unhandledRejection', (reason) => {
+  console.error('🛡️ [SERVER GUARD] Unhandled Rejection:', reason);
+});
+
+// 보안 헤더 미들웨어
+app.use((req, res, next) => {
+  res.setHeader('X-Content-Type-Options', 'nosniff');
+  res.setHeader('X-Frame-Options', 'SAMEORIGIN');
+  res.setHeader('X-XSS-Protection', '1; mode=block');
+  next();
+});
+
+// 대량 접속자 DDoS/트래픽 폭주 방지 Rate Limiter
+const ipRequestCounts = new Map();
+setInterval(() => { ipRequestCounts.clear(); }, 60000);
+
+function rateLimiter(maxReqPerMin = 300) {
+  return (req, res, next) => {
+    const ip = req.ip || req.socket.remoteAddress || '127.0.0.1';
+    const current = (ipRequestCounts.get(ip) || 0) + 1;
+    ipRequestCounts.set(ip, current);
+
+    if (current > maxReqPerMin) {
+      return res.status(429).json({ error: '트래픽 요청이 급증하여 일시 제어 중입니다. 잠시 후 다시 시도해주세요.' });
+    }
+    next();
+  };
+}
+
+app.use('/api/auth/', rateLimiter(60));
+app.use('/api/', rateLimiter(500));
+
 // --- Supabase 설정 및 Mock DB 지원 ---
 let supabase = null;
 let isMockDb = false;
@@ -24,7 +61,7 @@ const fs = require('fs');
 
 // Mock DB 메모리 데이터스토어 (Supabase 미연동 시 사용)
 const mockDb = {
-  users: [], // { id, username, password_hash, worship_count, created_at }
+  users: [],
   globalCount: 0,
   posts: [
     { id: 1, username: '퐁퐁단단장', content: '퐁퐁푸린님을 경배하라! 푸딩 수호대 모집 중!', image_data: null, created_at: new Date(Date.now() - 3600000).toISOString() },
@@ -32,7 +69,7 @@ const mockDb = {
   ]
 };
 
-// 로컬 DB 저장/로드 함수
+// 로컬 DB 저장/로드 함수 (고트래픽 디바운스 디스크 저장)
 function loadLocalDb() {
   if (fs.existsSync(DB_FILE)) {
     try {
@@ -55,6 +92,16 @@ function saveLocalDb() {
   } catch (e) {
     console.error('로컬 백업 DB 저장 실패:', e);
   }
+}
+
+let isSavePending = false;
+function debouncedSaveLocalDb() {
+  if (isSavePending) return;
+  isSavePending = true;
+  setTimeout(() => {
+    saveLocalDb();
+    isSavePending = false;
+  }, 2000);
 }
 
 // 초기 로딩
@@ -605,7 +652,7 @@ app.post('/api/worship', authenticateToken, async (req, res) => {
           userCoins = user.coins;
         }
       }
-      saveLocalDb();
+      debouncedSaveLocalDb();
     } else {
       // Supabase: 글로벌 숭배 카운트 증가
       const { data: globalData, error: gError } = await supabase
