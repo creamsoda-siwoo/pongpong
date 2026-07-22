@@ -5,8 +5,10 @@ import { mockDb, saveLocalDb, supabase, isMockDb, JWT_SECRET } from '../../../..
 import { checkRateLimit } from '../../../../lib/rateLimit';
 import crypto from 'crypto';
 
+export const dynamic = 'force-dynamic';
+
 export async function POST(req) {
-  const rateLimitError = checkRateLimit(req, 30); // 30 req/min for register
+  const rateLimitError = checkRateLimit(req, 30);
   if (rateLimitError) return rateLimitError;
 
   try {

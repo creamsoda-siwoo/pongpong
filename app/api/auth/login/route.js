@@ -4,8 +4,10 @@ import jwt from 'jsonwebtoken';
 import { mockDb, saveLocalDb, supabase, isMockDb, JWT_SECRET } from '../../../../lib/db';
 import { checkRateLimit } from '../../../../lib/rateLimit';
 
+export const dynamic = 'force-dynamic';
+
 export async function POST(req) {
-  const rateLimitError = checkRateLimit(req, 40); // 40 req/min for login
+  const rateLimitError = checkRateLimit(req, 40);
   if (rateLimitError) return rateLimitError;
 
   try {
