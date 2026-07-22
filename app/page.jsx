@@ -4,6 +4,7 @@ import BackgroundParticles from '../components/BackgroundParticles';
 import Header from '../components/Header';
 import PurinClicker from '../components/PurinClicker';
 import MiniGames from '../components/MiniGames';
+import PuddingPiano from '../components/PuddingPiano';
 import TarotSection from '../components/TarotSection';
 import ScriptureSection from '../components/ScriptureSection';
 import OracleSection from '../components/OracleSection';
@@ -20,7 +21,7 @@ export default function Home() {
   const [user, setUser] = useState(null);
   const [globalCount, setGlobalCount] = useState(0);
   const [userCount, setUserCount] = useState(0);
-  const [activeModal, setActiveModal] = useState(null); // 'login', 'register', 'shop', 'gacha', 'roulette', 'pass'
+  const [activeModal, setActiveModal] = useState(null);
   const [toastMessage, setToastMessage] = useState('');
   const [isDarkMode, setIsDarkMode] = useState(false);
   const [isMuted, setIsMuted] = useState(false);
@@ -112,7 +113,7 @@ export default function Home() {
 
       <div className="event-banner-strip">
         <span className="event-banner-inner">
-          🍮 ✨ <strong>여름 한정 성전 이벤트</strong> 개최 중 — 오늘 숭배 100회 달성 시 🎁 <strong>황금 푸딩 코인 +500 PPC</strong> 보너스 지급! &nbsp;&nbsp;|&nbsp;&nbsp; 🐾 펫 친구들과 10회 이상 교감하면 시즌 전용 칭호 획득! &nbsp;&nbsp;|&nbsp;&nbsp; 🎡 럭키 룰렛 & 🎁 디저트 가챠 도전 가능! ✨ 🍮
+          🍮 ✨ <strong>여름 한정 성전 이벤트</strong> 개최 중 — 오늘 숭배 100회 달성 시 🎁 <strong>황금 푸딩 코인 +500 PPC</strong> 보너스 지급! &nbsp;&nbsp;|&nbsp;&nbsp; 🐾 펫 친구들과 10회 이상 교감하면 시즌 전용 칭호 획득! &nbsp;&nbsp;|&nbsp;&nbsp; 🎹 성스러운 푸딩 피아노 연주 가능! ✨ 🍮
         </span>
       </div>
 
@@ -127,6 +128,8 @@ export default function Home() {
         />
 
         <MiniGames showToast={showToast} user={user} setUser={setUser} />
+
+        <PuddingPiano showToast={showToast} isMuted={isMuted} />
 
         <TarotSection />
 

@@ -8,9 +8,7 @@ export default function MiniGames({ showToast, user, setUser }) {
   const [catchScore, setCatchScore] = useState(0);
   const [catchTime, setCatchTime] = useState(30);
   const [isCatchPlaying, setIsCatchPlaying] = useState(false);
-  const [basketPos, setBasketPos] = useState(50); // percentage
-  const [puddings, setPuddings] = useState([]);
-  const catchTimerRef = useRef(null);
+  const [basketPos, setBasketPos] = useState(50);
 
   // Game 2: Memory Match
   const [memoryCards, setMemoryCards] = useState([]);
@@ -28,12 +26,16 @@ export default function MiniGames({ showToast, user, setUser }) {
   const [reels, setReels] = useState(['🍮', '🍩', '🍨']);
   const [isSpinning, setIsSpinning] = useState(false);
 
+  // Game 5: Pudding Bakery
+  const [bakeStatus, setBakeStatus] = useState('ready'); // ready, baking, done
+  const [bakeProgress, setBakeProgress] = useState(0);
+  const [bakedPuddings, setBakedPuddings] = useState(0);
+
   // --- Game 1 Logic ---
   const startCatchGame = () => {
     setCatchScore(0);
     setCatchTime(30);
     setIsCatchPlaying(true);
-    setPuddings([]);
     setBasketPos(50);
   };
 
@@ -171,6 +173,24 @@ export default function MiniGames({ showToast, user, setUser }) {
     }, 100);
   };
 
+  // --- Game 5 Logic (Bakery) ---
+  const startBaking = () => {
+    setBakeStatus('baking');
+    setBakeProgress(0);
+    const interval = setInterval(() => {
+      setBakeProgress((p) => {
+        if (p >= 100) {
+          clearInterval(interval);
+          setBakeStatus('done');
+          setBakedPuddings((b) => b + 1);
+          showToast('👩‍🍳 달콤 폭신 커스터드 푸딩 완성! (+20 PPC)');
+          return 100;
+        }
+        return p + 10;
+      });
+    }, 300);
+  };
+
   useEffect(() => {
     startMemoryGame();
   }, []);
@@ -206,6 +226,12 @@ export default function MiniGames({ showToast, user, setUser }) {
           onClick={() => setActiveTab('slot')}
         >
           <i className="fa-solid fa-dice"></i> 4. 럭키 슬롯
+        </button>
+        <button
+          className={`game-tab-btn ${activeTab === 'bake' ? 'active' : ''}`}
+          onClick={() => setActiveTab('bake')}
+        >
+          <i className="fa-solid fa-fire-burner"></i> 5. 푸딩 베이커리
         </button>
       </div>
 
@@ -315,6 +341,32 @@ export default function MiniGames({ showToast, user, setUser }) {
             </div>
             <button className="btn btn-secondary btn-block" onClick={spinSlot} disabled={isSpinning}>
               {isSpinning ? '돌아가는 중...' : '🎰 슬롯 돌리기!'}
+            </button>
+          </div>
+        )}
+
+        {/* Game 5: Bakery Cooking */}
+        {activeTab === 'bake' && (
+          <div className="minigame-card" style={{ textAlign: 'center' }}>
+            <h3 style={{ marginBottom: '15px', color: 'var(--dark-brown)' }}>👩‍🍳 퐁퐁 쿠킹 베이커리</h3>
+            <p style={{ fontSize: '13px', color: 'var(--dark-brown-light)', marginBottom: '15px' }}>
+              완성된 푸딩 총 개수: <strong>{bakedPuddings} 개</strong>
+            </p>
+
+            <div style={{ fontSize: '64px', margin: '15px 0' }}>
+              {bakeStatus === 'ready' ? '🥣' : bakeStatus === 'baking' ? '🔥' : '🍮'}
+            </div>
+
+            <div className="shrine-progress-track" style={{ marginBottom: '20px' }}>
+              <div className="shrine-progress-fill" style={{ width: `${bakeProgress}%` }}></div>
+            </div>
+
+            <button
+              className="btn btn-secondary btn-block"
+              onClick={startBaking}
+              disabled={bakeStatus === 'baking'}
+            >
+              {bakeStatus === 'baking' ? '오븐에서 푸딩 굽는 중...' : '🔥 푸딩 베이킹 시작'}
             </button>
           </div>
         )}
