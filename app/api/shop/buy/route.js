@@ -1,5 +1,7 @@
 import { NextResponse } from 'next/server';
-import { getAuthUser, mockDb, saveLocalDb, supabase, isMockDb } from '@/lib/db';
+import { getAuthUser, mockDb, saveLocalDb, supabase, isMockDb } from '../../../../lib/db';
+
+export const dynamic = 'force-dynamic';
 
 export async function POST(req) {
   try {
@@ -12,10 +14,20 @@ export async function POST(req) {
     const cost = parseInt(price) || 0;
 
     if (isMockDb) {
-      const user = mockDb.users.find(u => u.id === authUser.id);
-      if (!user) return NextResponse.json({ error: '사용자를 찾을 수 없습니다.' }, { status: 404 });
+      let user = mockDb.users.find(u => u.id === authUser.id || u.username === authUser.username);
+      if (!user) {
+        user = {
+          id: authUser.id,
+          username: authUser.username,
+          worship_count: 0,
+          coins: 100,
+          inventory: [],
+          equipped_skin: 'default'
+        };
+        mockDb.users.push(user);
+      }
 
-      user.coins = user.coins || 100;
+      user.coins = (user.coins !== undefined && user.coins !== null) ? user.coins : 100;
       if (user.coins < cost) {
         return NextResponse.json({ error: '퐁퐁코인이 부족합니다!' }, { status: 400 });
       }
@@ -45,10 +57,10 @@ export async function POST(req) {
       }
 
       const nextCoins = currentCoins - cost;
-      let inventory = Array.isArray(user.inventory) ? user.inventory : [];
+      let inventory = Array.isArray(user?.inventory) ? user.inventory : [];
       if (!inventory.includes(itemId)) inventory.push(itemId);
 
-      let equipped_skin = user.equipped_skin || 'default';
+      let equipped_skin = user?.equipped_skin || 'default';
       if (itemId.startsWith('skin_')) equipped_skin = itemId;
 
       const { data: updated } = await supabase

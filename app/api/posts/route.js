@@ -1,5 +1,7 @@
 import { NextResponse } from 'next/server';
-import { getAuthUser, mockDb, saveLocalDb, supabase, isMockDb } from '@/lib/db';
+import { getAuthUser, mockDb, saveLocalDb, supabase, isMockDb } from '../../../lib/db';
+
+export const dynamic = 'force-dynamic';
 
 export async function GET() {
   try {
@@ -53,7 +55,7 @@ export async function POST(req) {
       return NextResponse.json({ success: true, post: data });
     }
   } catch (err) {
-    console.error(err);
+    console.error('POSTS POST ERROR:', err);
     return NextResponse.json({ error: '방명록 작성 오류' }, { status: 500 });
   }
 }

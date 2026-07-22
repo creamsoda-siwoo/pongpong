@@ -1,5 +1,7 @@
 import { NextResponse } from 'next/server';
-import { getAuthUser, mockDb, supabase, isMockDb } from '@/lib/db';
+import { getAuthUser, mockDb, supabase, isMockDb } from '../../../lib/db';
+
+export const dynamic = 'force-dynamic';
 
 export async function GET(req) {
   try {
@@ -10,7 +12,7 @@ export async function GET(req) {
     if (isMockDb) {
       globalCount = mockDb.globalCount;
       if (authUser) {
-        const user = mockDb.users.find(u => u.id === authUser.id);
+        const user = mockDb.users.find(u => u.id === authUser.id || u.username === authUser.username);
         if (user) userCount = user.worship_count;
       }
     } else {

@@ -1,5 +1,7 @@
 import { NextResponse } from 'next/server';
-import { getAuthUser, mockDb, saveLocalDb, supabase, isMockDb } from '@/lib/db';
+import { getAuthUser, mockDb, saveLocalDb, supabase, isMockDb } from '../../../../lib/db';
+
+export const dynamic = 'force-dynamic';
 
 export async function POST(req) {
   try {
@@ -11,8 +13,18 @@ export async function POST(req) {
     const { skinId } = await req.json();
 
     if (isMockDb) {
-      const user = mockDb.users.find(u => u.id === authUser.id);
-      if (!user) return NextResponse.json({ error: '사용자를 찾을 수 없습니다.' }, { status: 404 });
+      let user = mockDb.users.find(u => u.id === authUser.id || u.username === authUser.username);
+      if (!user) {
+        user = {
+          id: authUser.id,
+          username: authUser.username,
+          worship_count: 0,
+          coins: 100,
+          inventory: [],
+          equipped_skin: 'default'
+        };
+        mockDb.users.push(user);
+      }
 
       user.equipped_skin = skinId || 'default';
       saveLocalDb();

@@ -1,5 +1,7 @@
 import { NextResponse } from 'next/server';
-import { getAuthUser, mockDb, saveLocalDb, supabase, isMockDb } from '@/lib/db';
+import { getAuthUser, mockDb, saveLocalDb, supabase, isMockDb } from '../../../../lib/db';
+
+export const dynamic = 'force-dynamic';
 
 export async function POST(req) {
   try {
@@ -21,11 +23,24 @@ export async function POST(req) {
     const loot = gachaPool[Math.floor(Math.random() * gachaPool.length)];
 
     if (isMockDb) {
-      const user = mockDb.users.find(u => u.id === authUser.id);
-      user.coins = user.coins || 100;
+      let user = mockDb.users.find(u => u.id === authUser.id || u.username === authUser.username);
+      if (!user) {
+        user = {
+          id: authUser.id,
+          username: authUser.username,
+          worship_count: 0,
+          coins: 100,
+          inventory: [],
+          equipped_skin: 'default'
+        };
+        mockDb.users.push(user);
+      }
+
+      user.coins = (user.coins !== undefined && user.coins !== null) ? user.coins : 100;
       if (user.coins < cost) {
         return NextResponse.json({ error: '퐁퐁코인이 부족합니다! (100 PPC 필요)' }, { status: 400 });
       }
+
       user.coins -= cost;
       user.inventory = user.inventory || [];
       user.inventory.push(loot.name);
@@ -34,12 +49,12 @@ export async function POST(req) {
       return NextResponse.json({ success: true, loot, coins: user.coins, inventory: user.inventory });
     } else {
       const { data: user } = await supabase.from('worship_users').select('*').eq('id', authUser.id).maybeSingle();
-      const currentCoins = (user && user.coins !== null) ? parseInt(user.coins) : 100;
+      const currentCoins = (user && user.coins !== null && user.coins !== undefined) ? parseInt(user.coins) : 100;
       if (currentCoins < cost) {
         return NextResponse.json({ error: '퐁퐁코인이 부족합니다! (100 PPC 필요)' }, { status: 400 });
       }
 
-      let inventory = Array.isArray(user.inventory) ? user.inventory : [];
+      let inventory = Array.isArray(user?.inventory) ? user.inventory : [];
       inventory.push(loot.name);
       const nextCoins = currentCoins - cost;
 
@@ -53,6 +68,7 @@ export async function POST(req) {
       return NextResponse.json({ success: true, loot, coins: updated ? updated.coins : nextCoins, inventory: updated ? updated.inventory : inventory });
     }
   } catch (err) {
-    return NextResponse.json({ error: '가챠 뽑기 오류' }, { status: 500 });
+    console.error('GACHA ERROR:', err);
+    return NextResponse.json({ error: '가챠 뽑기 중 오류가 발생했습니다.' }, { status: 500 });
   }
 }

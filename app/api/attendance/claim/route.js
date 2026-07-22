@@ -1,5 +1,7 @@
 import { NextResponse } from 'next/server';
-import { getAuthUser, mockDb, saveLocalDb, supabase, isMockDb } from '@/lib/db';
+import { getAuthUser, mockDb, saveLocalDb, supabase, isMockDb } from '../../../../lib/db';
+
+export const dynamic = 'force-dynamic';
 
 export async function POST(req) {
   try {
@@ -11,10 +13,23 @@ export async function POST(req) {
     const today = new Date().toISOString().split('T')[0];
 
     if (isMockDb) {
-      const user = mockDb.users.find(u => u.id === authUser.id);
+      let user = mockDb.users.find(u => u.id === authUser.id || u.username === authUser.username);
+      if (!user) {
+        user = {
+          id: authUser.id,
+          username: authUser.username,
+          worship_count: 0,
+          coins: 100,
+          inventory: [],
+          equipped_skin: 'default'
+        };
+        mockDb.users.push(user);
+      }
+
       if (user.last_attendance === today) {
         return NextResponse.json({ error: '오늘 이미 출석체크 보상을 받으셨습니다!' }, { status: 400 });
       }
+
       user.last_attendance = today;
       user.coins = (user.coins || 100) + 150;
       user.worship_count = (user.worship_count || 0) + 30;

@@ -1,5 +1,7 @@
 import { NextResponse } from 'next/server';
-import { getAuthUser, mockDb, saveLocalDb, supabase, isMockDb } from '@/lib/db';
+import { getAuthUser, mockDb, saveLocalDb, supabase, isMockDb } from '../../../lib/db';
+
+export const dynamic = 'force-dynamic';
 
 export async function GET() {
   try {
@@ -69,7 +71,7 @@ export async function POST(req) {
     saveLocalDb();
     return NextResponse.json({ success: true, frame: newFrame });
   } catch (err) {
-    console.error(err);
+    console.error('FRAME POST ERROR:', err);
     return NextResponse.json({ error: '액자 게시 중 오류 발생' }, { status: 500 });
   }
 }
