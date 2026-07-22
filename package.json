@@ -1,18 +1,22 @@
 {
   "name": "pongpongpurin-worship",
   "version": "1.0.0",
-  "description": "PongPongPurin Worship Website with Supabase",
-  "main": "server.js",
+  "description": "PongPongPurin Worship Website with Next.js",
   "scripts": {
-    "start": "node server.js",
-    "dev": "node server.js"
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.43.4",
     "bcryptjs": "^2.4.3",
+    "cookie": "^0.6.0",
     "cookie-parser": "^1.4.6",
     "dotenv": "^16.4.5",
     "express": "^4.19.2",
-    "jsonwebtoken": "^9.0.2"
+    "jsonwebtoken": "^9.0.2",
+    "next": "^14.2.5",
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1"
   }
 }
