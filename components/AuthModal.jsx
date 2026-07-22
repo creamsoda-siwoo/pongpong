@@ -23,19 +23,26 @@ export default function AuthModal({ isOpen, mode, onClose, onAuthSuccess, showTo
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ username, password }),
       });
-      const data = await res.json();
 
-      if (data.success) {
+      let data;
+      const contentType = res.headers.get('content-type');
+      if (contentType && contentType.includes('application/json')) {
+        data = await res.json();
+      } else {
+        data = { error: `인증 서버 응답 오류 (${res.status})` };
+      }
+
+      if (res.ok && data.success) {
         showToast(mode === 'login' ? `🔓 환영합니다, ${data.user.username}님!` : '🎉 회원가입 및 로그인이 완료되었습니다!');
         onAuthSuccess(data.user);
         onClose();
         setUsername('');
         setPassword('');
       } else {
-        showToast(`❌ ${data.error || '인증 실패'}`);
+        showToast(`❌ ${data.error || '인증에 실패하였습니다.'}`);
       }
     } catch (err) {
-      showToast('❌ 네트워크 오류');
+      showToast('❌ 인증 처리 중 네트워크 오류가 발생했습니다.');
     } finally {
       setLoading(false);
     }

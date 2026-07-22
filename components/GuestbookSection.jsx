@@ -1,5 +1,6 @@
 'use client';
 import { useState, useEffect } from 'react';
+import { compressImage } from '../lib/imageUtils';
 
 export default function GuestbookSection({ user, showToast }) {
   const [posts, setPosts] = useState([]);
@@ -10,8 +11,10 @@ export default function GuestbookSection({ user, showToast }) {
   const fetchPosts = async () => {
     try {
       const res = await fetch('/api/posts');
-      const data = await res.json();
-      if (Array.isArray(data)) setPosts(data);
+      if (res.ok) {
+        const data = await res.json();
+        if (Array.isArray(data)) setPosts(data);
+      }
     } catch (e) {
       console.error(e);
     }
@@ -21,14 +24,18 @@ export default function GuestbookSection({ user, showToast }) {
     fetchPosts();
   }, []);
 
-  const handleImageChange = (e) => {
+  const handleImageChange = async (e) => {
     const file = e.target.files[0];
     if (!file) return;
-    const reader = new FileReader();
-    reader.onload = (event) => {
-      setImageData(event.target.result);
-    };
-    reader.readAsDataURL(file);
+
+    try {
+      showToast('📸 이미지 최적화 압축 중...');
+      const compressed = await compressImage(file, 800, 800, 0.7);
+      setImageData(compressed);
+      showToast('✨ 이미지 준비 완료!');
+    } catch (err) {
+      showToast('❌ 이미지 처리 실패');
+    }
   };
 
   const handleSubmit = async (e) => {
@@ -49,9 +56,16 @@ export default function GuestbookSection({ user, showToast }) {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ content, image_data: imageData }),
       });
-      const data = await res.json();
 
-      if (data.success) {
+      let data;
+      const contentType = res.headers.get('content-type');
+      if (contentType && contentType.includes('application/json')) {
+        data = await res.json();
+      } else {
+        data = { error: `서버 응답 오류 (${res.status})` };
+      }
+
+      if (res.ok && data.success) {
         showToast('✍️ 성전 방명록에 성스러운 한마디가 등록되었습니다!');
         setContent('');
         setImageData(null);
@@ -69,11 +83,13 @@ export default function GuestbookSection({ user, showToast }) {
   const handleReact = async (id) => {
     try {
       const res = await fetch(`/api/posts/${id}/react`, { method: 'POST' });
-      const data = await res.json();
-      if (data.success) {
-        setPosts((prev) =>
-          prev.map((p) => (String(p.id) === String(id) ? { ...p, reactions: data.reactions } : p))
-        );
+      if (res.ok) {
+        const data = await res.json();
+        if (data.success) {
+          setPosts((prev) =>
+            prev.map((p) => (String(p.id) === String(id) ? { ...p, reactions: data.reactions } : p))
+          );
+        }
       }
     } catch (e) {}
   };
@@ -124,7 +140,7 @@ export default function GuestbookSection({ user, showToast }) {
 
             <div style={{ marginBottom: '10px' }}>
               <label style={{ fontSize: '12px', fontWeight: 'bold', color: 'var(--dark-brown)' }}>
-                📷 사진 첨부 (선택)
+                📷 사진 첨부 (자동 최적화)
               </label>
               <input
                 type="file"

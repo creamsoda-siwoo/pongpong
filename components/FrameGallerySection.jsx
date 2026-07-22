@@ -1,5 +1,6 @@
 'use client';
 import { useState, useEffect } from 'react';
+import { compressImage } from '../lib/imageUtils';
 
 export default function FrameGallerySection({ user, showToast }) {
   const [frames, setFrames] = useState([]);
@@ -11,8 +12,10 @@ export default function FrameGallerySection({ user, showToast }) {
   const fetchFrames = async () => {
     try {
       const res = await fetch('/api/frames');
-      const data = await res.json();
-      if (Array.isArray(data)) setFrames(data);
+      if (res.ok) {
+        const data = await res.json();
+        if (Array.isArray(data)) setFrames(data);
+      }
     } catch (e) {
       console.error(e);
     }
@@ -22,14 +25,18 @@ export default function FrameGallerySection({ user, showToast }) {
     fetchFrames();
   }, []);
 
-  const handleImageChange = (e) => {
+  const handleImageChange = async (e) => {
     const file = e.target.files[0];
     if (!file) return;
-    const reader = new FileReader();
-    reader.onload = (ev) => {
-      setImageData(ev.target.result);
-    };
-    reader.readAsDataURL(file);
+
+    try {
+      showToast('📸 이미지 최적화 압축 중...');
+      const compressed = await compressImage(file, 800, 800, 0.7);
+      setImageData(compressed);
+      showToast('✨ 이미지 준비 완료!');
+    } catch (err) {
+      showToast('❌ 이미지 처리 실패');
+    }
   };
 
   const handleUpload = async (e) => {
@@ -50,18 +57,25 @@ export default function FrameGallerySection({ user, showToast }) {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ title, image_data: imageData, frame_style: frameStyle }),
       });
-      const data = await res.json();
 
-      if (data.success) {
-        showToast('🖼️ 성전 액자 갤러리에 사진이 정식 게시되었습니다!');
+      let data;
+      const contentType = res.headers.get('content-type');
+      if (contentType && contentType.includes('application/json')) {
+        data = await res.json();
+      } else {
+        data = { error: `서버 응답 오류 (${res.status})` };
+      }
+
+      if (res.ok && data.success) {
+        showToast('🖼️ 성전 액자 갤러리에 사진이 게시되었습니다!');
         setTitle('');
         setImageData(null);
         fetchFrames();
       } else {
-        showToast(`❌ ${data.error}`);
+        showToast(`❌ ${data.error || '액자 게시 실패'}`);
       }
     } catch (err) {
-      showToast('❌ 액자 게시 오류');
+      showToast('❌ 액자 게시 네트워크 오류');
     } finally {
       setLoading(false);
     }
@@ -70,11 +84,13 @@ export default function FrameGallerySection({ user, showToast }) {
   const handleReact = async (id) => {
     try {
       const res = await fetch(`/api/frames/${id}/react`, { method: 'POST' });
-      const data = await res.json();
-      if (data.success) {
-        setFrames((prev) =>
-          prev.map((f) => (String(f.id) === String(id) ? { ...f, reactions: data.reactions } : f))
-        );
+      if (res.ok) {
+        const data = await res.json();
+        if (data.success) {
+          setFrames((prev) =>
+            prev.map((f) => (String(f.id) === String(id) ? { ...f, reactions: data.reactions } : f))
+          );
+        }
       }
     } catch (e) {}
   };
@@ -132,7 +148,7 @@ export default function FrameGallerySection({ user, showToast }) {
             </div>
 
             <div style={{ marginBottom: '10px' }}>
-              <label style={{ fontSize: '12px', fontWeight: 'bold' }}>사진 파일</label>
+              <label style={{ fontSize: '12px', fontWeight: 'bold' }}>사진 파일 (자동 최적화)</label>
               <input type="file" accept="image/*" onChange={handleImageChange} disabled={!user || loading} style={{ fontSize: '12px', marginTop: '4px' }} />
             </div>
 
