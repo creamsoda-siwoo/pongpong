@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { getAuthUser, mockDb, supabase, isMockDb } from '../../../lib/db';
+import { getAuthUser, mockDb, supabase, isMockDb } from '../../../../lib/db';
 
 export const dynamic = 'force-dynamic';
 

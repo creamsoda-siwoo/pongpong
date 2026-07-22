@@ -1,5 +1,7 @@
 import { NextResponse } from 'next/server';
-import { mockDb, saveLocalDb, supabase, isMockDb } from '@/lib/db';
+import { mockDb, saveLocalDb, supabase, isMockDb } from '../../../../../lib/db';
+
+export const dynamic = 'force-dynamic';
 
 export async function POST(req, { params }) {
   const postId = params.id;
